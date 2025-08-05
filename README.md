@@ -74,5 +74,3 @@ You will need an API key from a Google Cloud project with the Vertex AI API enab
 * **V3.0: More Styles & Locations** - Expand the art style library beyond Ukiyo-e and add curated location data for other countries.
 
 ## License
-
-Distributed under the MIT License.
