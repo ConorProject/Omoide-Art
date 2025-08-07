@@ -1,13 +1,12 @@
 export default async function handler(req, res) {
   try {
-    // Get one piece of data from the form to prove the connection works
     const { focus } = req.body;
 
-    // Immediately send back a successful response with a placeholder image URL
-    // This URL uses a service that generates an image with text on it.
-    res.status(200).json({ 
-      imageUrl: `https://via.placeholder.com/1024x576.png?text=Success!+Your+focus+was:+${focus}` 
-    });
+    // Using a new, working placeholder service: placehold.co
+    // I've added our brand colors to make it look nicer.
+    const imageUrl = `https://placehold.co/1024x576/BC4749/FDFBF7?text=Success!+Focus:+${encodeURIComponent(focus)}`;
+
+    res.status(200).json({ imageUrl: imageUrl });
 
   } catch (error) {
     console.error("Error in dummy handler:", error);
