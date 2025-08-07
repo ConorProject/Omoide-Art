@@ -1,3 +1,5 @@
+import { VertexAI } from '@google-cloud/vertexai';
+
 /**
  * Omoide Art - Image Generation Serverless Function
  * 
