@@ -44,18 +44,9 @@ async function generateImage(prompt) {
   }
 
   try {
-    // Use credentials from environment variable or local file
-    let credentials;
-    if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
-      // Production/Vercel: use base64 encoded credentials from environment
-      const credentialsBase64 = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
-      const credentialsJson = Buffer.from(credentialsBase64, 'base64').toString('utf8');
-      credentials = JSON.parse(credentialsJson);
-    } else {
-      // Local development: read from file
-      const credentialsPath = path.join(__dirname, 'service-account.json');
-      credentials = JSON.parse(fs.readFileSync(credentialsPath, 'utf8'));
-    }
+    // Read the service account credentials from file
+    const credentialsPath = path.join(__dirname, 'service-account.json');
+    const credentials = JSON.parse(fs.readFileSync(credentialsPath, 'utf8'));
     
     const auth = new GoogleAuth({ 
       credentials,

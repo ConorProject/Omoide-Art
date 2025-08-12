@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omoide Art - Your Japan Memories, Painted by AI</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header Section -->
+    <header class="header">
+        <h1>Omoide Art <span class="kanji">思い出アート</span></h1>
+        <p class="tagline">Your Japan memories, painted by AI.</p>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Guided Memory Form -->
+        <form id="omoide-form" class="memory-form">
+            
+            <!-- Act I: The Scene -->
+            <section class="form-act">
+                <h2 class="act-title">Act I: The Scene</h2>
+                
+                <!-- Question 1 -->
+                <div class="form-group">
+                    <label for="location">Where in Japan does this memory live?</label>
+                    <input 
+                        type="text" 
+                        id="location" 
+                        name="location" 
+                        placeholder="e.g., Arashiyama Bamboo Grove, a street in Shinjuku, Lake Kawaguchi..."
+                        required
+                    >
+                </div>
+
+                <!-- Question 2 -->
+                <div class="form-group">
+                    <label>Describe the atmosphere.</label>
+                    <div class="button-group atmosphere-buttons">
+                        <button type="button" class="style-button" data-value="sunny">Sunny Day</button>
+                        <button type="button" class="style-button" data-value="golden">Golden Hour</button>
+                        <button type="button" class="style-button" data-value="overcast">Overcast & Moody</button>
+                        <button type="button" class="style-button" data-value="rainy">Rainy / Misty</button>
+                        <button type="button" class="style-button" data-value="night">Night</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Act II: The Subject -->
+            <section class="form-act">
+                <h2 class="act-title">Act II: The Subject</h2>
+                
+                <!-- Question 3 -->
+                <div class="form-group">
+                    <label for="focus">What was the main focus of your memory?</label>
+                    <input 
+                        type="text" 
+                        id="focus" 
+                        name="focus" 
+                        placeholder="e.g., Mount Fuji, the temple gate, a specific bridge, the city lights..."
+                        required
+                    >
+                </div>
+            </section>
+
+            <!-- Act III: The Magic -->
+            <section class="form-act">
+                <h2 class="act-title">Act III: The Magic</h2>
+                
+                <!-- Question 4 -->
+                <div class="form-group">
+                    <label for="detail">What is a small, unique detail you remember?</label>
+                    <textarea 
+                        id="detail" 
+                        name="detail" 
+                        rows="4"
+                        placeholder="e.g., the moss on a stone lantern, the reflection in a puddle, a single red maple leaf..."
+                        required
+                    ></textarea>
+                </div>
+
+                <!-- Question 5 -->
+                <div class="form-group">
+                    <label>How did it make you feel?</label>
+                    <div class="tag-group feeling-tags">
+                        <button type="button" class="tag-button" data-value="peaceful">Peaceful</button>
+                        <button type="button" class="tag-button" data-value="awe">Awe-Inspiring</button>
+                        <button type="button" class="tag-button" data-value="energetic">Energetic</button>
+                        <button type="button" class="tag-button" data-value="romantic">Romantic</button>
+                        <button type="button" class="tag-button" data-value="nostalgic">Nostalgic</button>
+                        <button type="button" class="tag-button" data-value="melancholy">Melancholy</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Submit Button -->
+            <div class="form-submit">
+                <button type="submit" class="submit-button">Create My Omoide</button>
+            </div>
+        </form>
+
+        <!-- Canvas Display Section -->
+        <div id="canvas" class="canvas-container">
+            <p class="canvas-placeholder">Your memory will be painted here.</p>
+        </div>
+    </main>
+
+    <!-- JavaScript -->
+    <script src="script.js?v=2"></script>
+</body>
+</html>

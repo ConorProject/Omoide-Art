@@ -13,3 +13,11 @@ Thumbs.db
 .vercel
 dist
 build
+
+# Ignore service account keys (NEVER commit these!)
+api/service-account.json
+service-account.json
+**/service-account*.json
+trip-art-generator*.json
+**/trip-art-generator*.json
+*.log
