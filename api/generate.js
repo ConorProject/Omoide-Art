@@ -73,10 +73,19 @@ async function generateImage(prompt) {
       googleAuthOptions: { credentials }
     });
 
-    const generativeModel = vertexAI.getGenerativeModel({ model: 'imagen-3.0-generate-001' });
-    const request = { contents: [{ parts: [{ text: prompt }] }] };
+    // Use preview method for image generation
+    const generativeVisionModel = vertexAI.preview.getGenerativeModel({ 
+      model: 'imagen-3.0-generate-001' 
+    });
+    
+    const request = {
+      contents: [{ 
+        role: 'user',
+        parts: [{ text: prompt }] 
+      }]
+    };
 
-    const response = await generativeModel.generateContent(request);
+    const response = await generativeVisionModel.generateContent(request);
 
     console.log('Full API response structure:', JSON.stringify(response, null, 2));
     console.log('Response keys:', Object.keys(response));
