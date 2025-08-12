@@ -19,8 +19,15 @@ export default async function handler(req, res) {
     const imageUrl = await generateImage(prompt);
     return res.status(200).json({ imageUrl });
   } catch (error) {
+    console.error('=== HANDLER ERROR ===');
     console.error('Error in handler function:', error);
-    return res.status(500).json({ message: 'Unable to create your Omoide. Please try again.' });
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('=== END HANDLER ERROR ===');
+    return res.status(500).json({ 
+      message: 'Unable to create your Omoide. Please try again.',
+      error: error.message // Include actual error in response for debugging
+    });
   }
 }
 
@@ -92,7 +99,17 @@ async function generateImage(prompt) {
     }
 
   } catch (error) {
-    console.error('Vertex AI API error:', error);
-    throw new Error('Failed to generate image with Vertex AI.');
+    // Enhanced logging for Google Cloud errors
+    console.error('=== VERTEX AI ERROR DETAILS ===');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error code:', error.code);
+    console.error('Error status:', error.status);
+    console.error('Error details:', error.details);
+    console.error('Full error object:', JSON.stringify(error, null, 2));
+    console.error('Error stack:', error.stack);
+    console.error('=== END ERROR DETAILS ===');
+    
+    throw new Error(`Vertex AI Error: ${error.code || 'UNKNOWN'} - ${error.message || 'No message'}`);
   }
 }
