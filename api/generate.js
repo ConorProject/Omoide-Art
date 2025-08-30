@@ -1,11 +1,19 @@
-import { VertexAI } from '@google-cloud/vertexai';
-import { GoogleAuth } from 'google-auth-library';
+import { GoogleGenAI } from "@google/genai";
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load environment variables
+const envPath = path.join(path.dirname(__dirname), '.env.local');
+const envContent = fs.readFileSync(envPath, 'utf8');
+const envVars = {};
+envContent.split('\n').forEach(line => {
+  const [key, value] = line.split('=');
+  if (key && value) envVars[key] = value;
+});
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -44,81 +52,48 @@ function constructArtisticPrompt({ location, atmosphere, focus, detail, feelings
 }
 
 async function generateImage(prompt) {
-  const projectId = process.env.GOOGLE_PROJECT_ID;
-  
-  if (!projectId) {
-    throw new Error('Google Cloud project ID is not set in environment variables.');
-  }
-
   try {
-    // Use credentials from environment variable or local file
-    let credentials;
-    if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
-      // Production/Vercel: parse JSON credentials from environment
-      credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
-    } else {
-      // Local development: read from file
-      const credentialsPath = path.join(__dirname, 'service-account.json');
-      credentials = JSON.parse(fs.readFileSync(credentialsPath, 'utf8'));
-    }
+    console.log('Using Gemini API with Imagen 4.0 Ultra...');
     
-    const auth = new GoogleAuth({ 
-      credentials,
-      scopes: ['https://www.googleapis.com/auth/cloud-platform']
-    });
-    
-    const vertexAI = new VertexAI({
-      project: projectId,
-      location: 'us-west1',
-      googleAuthOptions: { credentials }
+    const ai = new GoogleGenAI({
+      apiKey: envVars.GEMINI_API_KEY
     });
 
-    // Use preview method for image generation
-    const generativeVisionModel = vertexAI.preview.getGenerativeModel({ 
-      model: 'imagen-3.0-generate-001' 
+    console.log('Sending request to Imagen 4.0 Ultra via Gemini API...');
+    const response = await ai.models.generateImages({
+      model: 'imagen-4.0-ultra-generate-001',
+      prompt: prompt,
+      config: {
+        numberOfImages: 1,
+      },
     });
-    
-    const request = {
-      contents: [{ 
-        role: 'user',
-        parts: [{ text: prompt }] 
-      }]
-    };
 
-    const response = await generativeVisionModel.generateContent(request);
+    console.log('Response received from Gemini API');
 
-    console.log('Full API response structure:', JSON.stringify(response, null, 2));
-    console.log('Response keys:', Object.keys(response));
-    
-    if (response.response) {
-      console.log('Response.response keys:', Object.keys(response.response));
-      if (response.response.candidates) {
-        console.log('Number of candidates:', response.response.candidates.length);
-        console.log('First candidate structure:', JSON.stringify(response.response.candidates[0], null, 2));
+    if (response.generatedImages && response.generatedImages.length > 0) {
+      const generatedImage = response.generatedImages[0];
+      
+      if (generatedImage.image && generatedImage.image.imageBytes) {
+        const imgBytes = generatedImage.image.imageBytes;
+        console.log('Image data found, length:', imgBytes.length);
+        
+        // Return in the same format as before
+        return `data:image/png;base64,${imgBytes}`;
       }
     }
-
-    const base64Image = response.response.candidates[0].content.parts[0].inlineData.data;
-
-    if (base64Image) {
-      console.log('Image data found, length:', base64Image.length);
-      return `data:image/png;base64,${base64Image}`;
-    } else {
-      throw new Error('No image data was returned from the API.');
-    }
+    
+    throw new Error('No image data was returned from the Gemini API.');
 
   } catch (error) {
-    // Enhanced logging for Google Cloud errors
-    console.error('=== VERTEX AI ERROR DETAILS ===');
+    console.error('=== GEMINI API ERROR DETAILS ===');
     console.error('Error name:', error.name);
     console.error('Error message:', error.message);
     console.error('Error code:', error.code);
     console.error('Error status:', error.status);
-    console.error('Error details:', error.details);
     console.error('Full error object:', JSON.stringify(error, null, 2));
     console.error('Error stack:', error.stack);
     console.error('=== END ERROR DETAILS ===');
     
-    throw new Error(`Vertex AI Error: ${error.code || 'UNKNOWN'} - ${error.message || 'No message'}`);
+    throw new Error(`Gemini API Error: ${error.code || 'UNKNOWN'} - ${error.message || 'No message'}`);
   }
 }

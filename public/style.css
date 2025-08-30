@@ -238,8 +238,10 @@ textarea {
 
 /* Canvas Container */
 .canvas-container {
-    width: 100%;
-    aspect-ratio: 16 / 9;
+    width: 512px;
+    height: 512px;
+    aspect-ratio: 1 / 1;
+    margin: 0 auto;
     background-color: white;
     border: 2px dashed var(--border-color);
     border-radius: 12px;

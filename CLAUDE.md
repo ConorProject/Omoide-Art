@@ -4,13 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Omoide Art is a web application that transforms personal Japan travel memories into AI-generated Ukiyo-e style artwork. Users complete a guided 5-step questionnaire to describe their memory, and the system generates personalized art using Google Cloud Vertex AI (Imagen).
+Omoide Art is a web application that transforms personal Japan travel memories into AI-generated Ukiyo-e style artwork. Users complete a guided 5-step questionnaire to describe their memory, and the system generates personalized art using Google Gemini API with Imagen 4.0 Ultra.
 
 ## Current Status
-- ✅ HTML structure (index.html) - Complete guided memory form
-- ✅ CSS styling (style.css) - Japanese-inspired responsive design  
+- ✅ HTML structure (public/index.html) - Complete guided memory form
+- ✅ CSS styling (public/style.css) - Japanese-inspired responsive design with square image containers
 - ✅ JavaScript interactivity (script.js) - Button states and form handling
-- ⏳ API integration with Vercel/Google Cloud Vertex AI - Not implemented
+- ✅ API integration (api/generate.js) - Fully working with Google Gemini API + Imagen 4.0 Ultra
+- ✅ Image generation - Producing 1024x1024 Ukiyo-e style artwork
+- ✅ Deployment ready - Vercel serverless functions configured
 
 ## Development Commands
 
@@ -59,9 +61,22 @@ The memory questionnaire follows a storytelling approach:
 - Fully responsive with mobile-first breakpoints
 - CSS custom properties for consistent theming
 
-## Next Steps for Development
-1. Create serverless API endpoint (`/api/generate-image`) for Vertex AI integration
-2. Replace placeholder form submission with actual API call
-3. Add loading states and progress indicators
-4. Implement image display in canvas container
-5. Add error handling for API failures
+## Technical Implementation
+- **Frontend**: Vanilla HTML/CSS/JS with Japanese-inspired design
+- **Backend**: Vercel serverless function at `/api/generate.js`
+- **AI Model**: Google Imagen 4.0 Ultra via Gemini API
+- **Image Output**: 1024x1024 Ukiyo-e style artwork
+- **Container**: Square 512x512 display with perfect aspect ratio
+
+## Recent Fixes
+- ✅ Resolved CSS file conflicts (consolidated to `/public/style.css`)
+- ✅ Fixed square image container display (was showing rectangular)
+- ✅ Switched from Vertex AI to Gemini API (quota/auth issues)
+- ✅ Implemented proper error handling and loading states
+
+## Next Steps for Optimization
+1. **Prompt Engineering**: Refine the artistic prompt template for better Ukiyo-e results
+2. **Resolution Options**: Configure output resolution (currently 1024x1024, could be 2048x2048)
+3. **Form Optimization**: Review the 5 questions - are they capturing the best memory details?
+4. **UI Polish**: Enhance visual design and user experience
+5. **Additional Features**: Consider download, share, or gallery functionality
