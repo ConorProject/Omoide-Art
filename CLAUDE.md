@@ -4,14 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Omoide Art is a web application that transforms personal Japan travel memories into AI-generated Ukiyo-e style artwork. Users complete a guided 5-step questionnaire to describe their memory, and the system generates personalized art using Google Gemini API with Imagen 4.0 Ultra.
+Omoide Art is a web application that transforms personal Japan travel memories into AI-generated shin-hanga style artwork. Users complete a guided 5-step questionnaire to describe their memory, and the system uses advanced AI preprocessing (Gemini API) to enhance prompts before generating high-resolution 2048x2048 artwork via Wavespeed AI.
 
 ## Current Status
 - ✅ HTML structure (public/index.html) - Complete guided memory form
 - ✅ CSS styling (public/style.css) - Japanese-inspired responsive design with square image containers
 - ✅ JavaScript interactivity (script.js) - Button states and form handling
-- ✅ API integration (api/generate.js) - Fully working with Google Gemini API + Imagen 4.0 Ultra
-- ✅ Image generation - Producing 1024x1024 Ukiyo-e style artwork
+- ✅ AI preprocessing pipeline - Gemini API transforms basic inputs into sophisticated artistic prompts
+- ✅ High-resolution image generation - Wavespeed AI producing 2048x2048 shin-hanga artwork
+- ✅ Advanced prompt engineering - Expert art director instructions with foreground anchors and layered composition
 - ✅ Deployment ready - Vercel serverless functions configured
 
 ## Development Commands
@@ -28,7 +29,8 @@ vercel dev
 ### Environment Setup
 Create `.env.local` for API keys:
 ```
-GOOGLE_API_KEY='Your-Secret-API-Key-Goes-Here'
+GEMINI_API_KEY='Your-Gemini-API-Key-Goes-Here'
+WAVESPEED_API_KEY='Your-Wavespeed-API-Key-Goes-Here'
 ```
 
 ## Architecture
@@ -64,19 +66,34 @@ The memory questionnaire follows a storytelling approach:
 ## Technical Implementation
 - **Frontend**: Vanilla HTML/CSS/JS with Japanese-inspired design
 - **Backend**: Vercel serverless function at `/api/generate.js`
-- **AI Model**: Google Imagen 4.0 Ultra via Gemini API
-- **Image Output**: 1024x1024 Ukiyo-e style artwork
-- **Container**: Square 512x512 display with perfect aspect ratio
+- **AI Pipeline**: 
+  - **Text Enhancement**: Gemini 1.5 Flash transforms user inputs into sophisticated prompts
+  - **Image Generation**: Wavespeed AI (Imagen 4.0 Ultra) creates 2048x2048 artwork
+- **Art Style**: Modern shin-hanga woodblock print aesthetic
+- **Display**: Square containers with perfect aspect ratio
 
-## Recent Fixes
-- ✅ Resolved CSS file conflicts (consolidated to `/public/style.css`)
-- ✅ Fixed square image container display (was showing rectangular)
-- ✅ Switched from Vertex AI to Gemini API (quota/auth issues)
-- ✅ Implemented proper error handling and loading states
+## Recent Major Improvements
+- ✅ **AI Preprocessing Pipeline**: Implemented Gemini API for sophisticated prompt enhancement
+- ✅ **Resolution Upgrade**: Upgraded from 1024x1024 to 2048x2048 high-resolution images
+- ✅ **API Integration**: Switched to Wavespeed AI for reliable Imagen 4.0 Ultra access
+- ✅ **Advanced Prompt Engineering**: Expert art director instructions with foreground anchors and layered composition
+- ✅ **Historical Accuracy**: Updated from generic "Ukiyo-e" to historically accurate "shin-hanga" style
 
-## Next Steps for Optimization
-1. **Prompt Engineering**: Refine the artistic prompt template for better Ukiyo-e results
-2. **Resolution Options**: Configure output resolution (currently 1024x1024, could be 2048x2048)
-3. **Form Optimization**: Review the 5 questions - are they capturing the best memory details?
-4. **UI Polish**: Enhance visual design and user experience
-5. **Additional Features**: Consider download, share, or gallery functionality
+## System Architecture
+
+### AI Processing Pipeline
+1. **User Input**: 5-question memory form captures location, focus, details, atmosphere, feelings
+2. **AI Enhancement**: Gemini 1.5 Flash transforms basic inputs using expert art director instructions
+3. **Image Generation**: Enhanced prompts sent to Wavespeed AI (Imagen 4.0 Ultra) for 2K rendering
+4. **Output**: High-resolution 2048x2048 shin-hanga style artwork
+
+### Cost Structure
+- **Gemini API**: ~$0.0001-0.0005 per prompt enhancement (negligible)
+- **Wavespeed AI**: ~$0.058 per 2K image generation
+- **Total**: Extremely cost-effective for professional-quality results
+
+## Future Considerations
+1. **Usage Controls**: Implement rate limiting for cost management
+2. **User Experience**: Add download and sharing functionality
+3. **Gallery**: Consider showcasing generated artwork
+4. **Form Refinement**: Optimize questions based on user feedback
