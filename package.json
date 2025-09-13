@@ -19,7 +19,5 @@
     "url": "https://github.com/ConorProject/omoide-art/issues"
   },
   "homepage": "https://github.com/ConorProject/omoide-art#readme",
-  "dependencies": {
-    "@google-cloud/vertexai": "^1.10.0"
-  }
+  "dependencies": {}
 }
