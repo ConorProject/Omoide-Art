@@ -41,6 +41,26 @@
                     >
                 </div>
 
+                <!-- Season Selection -->
+                <div class="form-group">
+                    <label>What season was your memory in?</label>
+                    <div class="season-selector">
+                        <div class="season-choice" data-season="spring">
+                            <span>🌸 Spring</span>
+                        </div>
+                        <div class="season-choice" data-season="summer">
+                            <span>☀️ Summer</span>
+                        </div>
+                        <div class="season-choice" data-season="autumn">
+                            <span>🍂 Autumn</span>
+                        </div>
+                        <div class="season-choice" data-season="winter">
+                            <span>❄️ Winter</span>
+                        </div>
+                    </div>
+                    <input type="hidden" id="selected-season" name="season" value="">
+                </div>
+
                 <!-- Question 2 -->
                 <div class="form-group">
                     <label>Describe the atmosphere.</label>
@@ -101,19 +121,66 @@
                 </div>
             </section>
 
+            <!-- Canvas Choice -->
+            <section class="canvas-choice">
+                <h4>How do you remember the shape of your scene?</h4>
+                <div class="aspect-ratio-buttons">
+                    <button type="button" class="ar-btn selected" data-ar="1:1">
+                        <div class="preview-box square"></div>
+                        Square
+                    </button>
+                    <button type="button" class="ar-btn" data-ar="3:4">
+                        <div class="preview-box portrait"></div>
+                        Portrait
+                    </button>
+                    <button type="button" class="ar-btn" data-ar="4:3">
+                        <div class="preview-box landscape"></div>
+                        Landscape
+                    </button>
+                </div>
+            </section>
+
             <!-- Submit Button -->
             <div class="form-submit">
                 <button type="submit" class="submit-button">Create My Omoide</button>
             </div>
         </form>
 
-        <!-- Canvas Display Section -->
-        <div id="canvas" class="canvas-container">
-            <p class="canvas-placeholder">Your memory will be painted here.</p>
+        <!-- Artist's Quad Gallery -->
+        <div id="gallery-section" class="gallery-section" style="display: none;">
+            <div class="gallery-header">
+                <h3>Your Artist's Quad</h3>
+                <button id="clear-images-btn" type="button" class="clear-images-btn" style="display: none;">Clear All Images</button>
+            </div>
+            <div id="gallery-grid" class="gallery-grid">
+                <div class="gallery-item loading">
+                    <div class="loading-spinner"></div>
+                </div>
+                <div class="gallery-item loading">
+                    <div class="loading-spinner"></div>
+                </div>
+                <div class="gallery-item loading">
+                    <div class="loading-spinner"></div>
+                </div>
+                <div class="gallery-item loading">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lightbox for enlarged view -->
+        <div id="lightbox" class="lightbox" style="display: none;">
+            <div class="lightbox-content">
+                <span class="lightbox-close">&times;</span>
+                <img id="lightbox-image" src="" alt="Enlarged artwork">
+                <div class="lightbox-actions">
+                    <button class="lightbox-download">Download</button>
+                </div>
+            </div>
         </div>
     </main>
 
     <!-- JavaScript -->
-    <script src="script.js?v=2"></script>
+    <script src="script.js?v=4"></script>
 </body>
 </html>

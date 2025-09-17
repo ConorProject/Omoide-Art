@@ -205,6 +205,49 @@ textarea {
     border-color: var(--accent-color);
 }
 
+/* Season Selector */
+.season-selector {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.season-choice {
+    padding: 16px 12px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 400;
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+    color: var(--text-primary);
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.season-choice:hover {
+    background-color: var(--hover-bg);
+    border-color: var(--accent-color);
+    transform: translateY(-1px);
+}
+
+.season-choice.selected {
+    background-color: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
+.season-choice span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 /* Submit Button */
 .form-submit {
     margin-top: 60px;
@@ -300,6 +343,16 @@ textarea {
     .tag-button {
         padding: 8px 16px;
         font-size: 0.85rem;
+    }
+
+    .season-selector {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .season-choice {
+        padding: 12px 8px;
+        font-size: 0.9rem;
     }
     
     .submit-button {
@@ -442,4 +495,299 @@ textarea {
     background-color: var(--text-light);
     transform: none;
     box-shadow: 0 2px 8px var(--shadow-light);
+}
+
+/* Canvas Choice (Aspect Ratio Selector) */
+.canvas-choice {
+    margin-top: 40px;
+    text-align: center;
+}
+
+.canvas-choice h4 {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    font-family: 'Noto Serif JP', serif;
+}
+
+.aspect-ratio-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.ar-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 400;
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    cursor: pointer;
+    transition: var(--transition);
+    color: var(--text-primary);
+}
+
+.ar-btn:hover {
+    background-color: var(--hover-bg);
+    border-color: var(--accent-color);
+}
+
+.ar-btn.selected {
+    background-color: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
+/* Preview Boxes */
+.preview-box {
+    background-color: currentColor;
+    border-radius: 3px;
+    opacity: 0.8;
+    transition: var(--transition);
+}
+
+/* Square preview box */
+.preview-box.square {
+    width: 18px;
+    height: 18px;
+}
+
+/* Portrait preview box */
+.preview-box.portrait {
+    width: 16px;
+    height: 20px;
+}
+
+/* Landscape preview box */
+.preview-box.landscape {
+    width: 20px;
+    height: 16px;
+}
+
+/* Dynamic Canvas Container Sizing */
+.canvas-container {
+    transition: aspect-ratio 0.3s ease, width 0.3s ease, height 0.3s ease;
+}
+
+/* Aspect ratio classes for dynamic sizing */
+.canvas-container.square {
+    aspect-ratio: 1 / 1;
+}
+
+.canvas-container.portrait {
+    aspect-ratio: 3 / 4;
+    max-width: 512px;
+    width: 512px;
+    height: auto;
+}
+
+.canvas-container.landscape {
+    aspect-ratio: 4 / 3;
+    max-width: 512px;
+    width: 512px;
+    height: auto;
+}
+
+/* Mobile responsiveness for aspect ratio buttons */
+@media (max-width: 480px) {
+    .aspect-ratio-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .ar-btn {
+        width: 100%;
+        max-width: 200px;
+        justify-content: center;
+    }
+}
+
+/* Artist's Quad Gallery */
+.gallery-section {
+    margin-top: 60px;
+    text-align: center;
+}
+
+.gallery-section h3 {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 32px;
+    font-family: 'Noto Serif JP', serif;
+}
+
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.gallery-item {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: var(--transition);
+    background-color: var(--background-light);
+    border: 2px solid var(--border-color);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gallery-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 32px var(--shadow-medium);
+    border-color: var(--accent-color);
+}
+
+.gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transition: var(--transition);
+}
+
+.gallery-item img:hover {
+    transform: scale(1.05);
+}
+
+/* Loading states */
+.gallery-item.loading {
+    cursor: default;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-color);
+    border-top: 3px solid var(--accent-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Lightbox */
+.lightbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.lightbox.show {
+    opacity: 1;
+}
+
+.lightbox-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    font-size: 32px;
+    color: white;
+    cursor: pointer;
+    z-index: 1001;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.lightbox-close:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+#lightbox-image {
+    max-width: 100%;
+    max-height: 80vh;
+    width: auto;
+    height: auto;
+    display: block;
+    object-fit: contain;
+}
+
+.lightbox-actions {
+    padding: 20px;
+    text-align: center;
+    background: white;
+}
+
+.lightbox-download {
+    padding: 12px 24px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 24px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.lightbox-download:hover {
+    background-color: #A43739;
+    transform: translateY(-2px);
+}
+
+/* Mobile responsiveness for gallery */
+@media (max-width: 768px) {
+    .gallery-grid {
+        max-width: 400px;
+        gap: 16px;
+    }
+    
+    .lightbox-content {
+        max-width: 95vw;
+        max-height: 85vh;
+    }
+    
+    .gallery-section h3 {
+        font-size: 1.25rem;
+        margin-bottom: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .gallery-grid {
+        grid-template-columns: 1fr;
+        max-width: 300px;
+    }
 }
