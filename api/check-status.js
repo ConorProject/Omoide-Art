@@ -54,7 +54,6 @@ export default async function handler(req, res) {
     const outputs = data?.outputs || []; // This is an array per the docs
 
     console.log(`📊 Job ${jobId} status: ${jobStatus}`);
-    console.log(`📊 Data keys:`, data ? Object.keys(data) : 'no data');
 
     if (jobStatus === 'completed') {
       return res.status(200).json({
