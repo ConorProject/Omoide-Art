@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Omoide Art is a web application that transforms personal Japan travel memories into AI-generated shin-hanga style artwork. Users complete a guided 6-step questionnaire to describe their memory, and the system uses advanced AI preprocessing (Gemini API) to enhance prompts before generating print-quality 4K artwork via Wavespeed AI. Features a 3-roll system with persistent image storage.
+Omoide Art is a web application that transforms personal Japan travel memories into AI-generated shin-hanga style artwork. Users complete a guided 5-step questionnaire to describe their memory, and the system uses advanced AI preprocessing (Gemini API) to enhance prompts before generating print-quality 4K artwork via Wavespeed AI. Features async job architecture for reliable image generation and Japanese-themed notifications.
 
 ## Current Status
 - ✅ HTML structure (public/index.html) - Complete guided memory form with season selection
@@ -99,12 +99,29 @@ The memory questionnaire follows a storytelling approach:
 
 ### Cost Structure
 - **Gemini API**: ~$0.0001-0.0005 per prompt enhancement (negligible)
-- **Wavespeed AI**: $0.027 per 4K image ($0.108 per 4-image roll)
-- **Total per user**: $0.324 for complete 3-roll experience (12 premium 4K images)
-- **Exceptional value**: Print-quality 4K shin-hanga artwork at ~$0.027 per piece
+- **Wavespeed AI**: $0.108 per 4K image generation (4 images per job using bytedance/seedream-v4/sequential)
+- **Total per generation**: $0.108 for 4 premium 4K print-ready images
+- **Exceptional value**: Print-quality 4K shin-hanga artwork at $0.027 per piece
 
 ## Future Considerations
-1. **Usage Controls**: Implement rate limiting for cost management
-2. **User Experience**: Add download and sharing functionality
-3. **Gallery**: Consider showcasing generated artwork
-4. **Form Refinement**: Optimize questions based on user feedback
+1. **Print-on-Demand Integration**: Prodigi API for canvas prints and art prints
+2. **Shopify Integration**: Payment processing for physical products
+3. **Product Mockups**: Show artwork on canvas/print products before purchase
+4. **Usage Controls**: Implement rate limiting for cost management
+5. **Enhanced UX**: Additional download formats and sharing functionality
+
+## Upcoming: Print-on-Demand Integration
+
+### Prodigi API Research Complete
+- **Perfect Image Match**: 4096×4096 images ideal for canvas printing (exceeds 2137×2137 requirement)
+- **Product Focus**: Canvas prints and art prints initially
+- **Integration Points**:
+  - Enhance existing lightbox with "Order Print" button
+  - Add product selection (canvas sizes: 10×10", 12×12", 16×16")
+  - Integrate quote API for real-time pricing
+  - Bridge to Shopify for payment processing
+- **Technical Architecture**:
+  - New `/api/prodigi-quote` endpoint for pricing
+  - Lightbox enhancement for product selection
+  - Shopify redirect for checkout and fulfillment
+- **Key Benefits**: Transform digital art into physical products, global shipping via Prodigi labs
