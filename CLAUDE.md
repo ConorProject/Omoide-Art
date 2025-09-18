@@ -125,3 +125,4 @@ The memory questionnaire follows a storytelling approach:
   - Lightbox enhancement for product selection
   - Shopify redirect for checkout and fulfillment
 - **Key Benefits**: Transform digital art into physical products, global shipping via Prodigi labs
+- let's do 2

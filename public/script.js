@@ -79,8 +79,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error('No valid images were generated. Please try again.');
             }
 
+            // Upload images to blob storage for persistence
+            showNotification('Uploading images to permanent storage...', 'info');
+            const blobUploadResult = await uploadImagesToBlobStorage(validImageUrls);
+
+            if (!blobUploadResult.success) {
+                console.warn('Blob upload failed, continuing with temporary URLs:', blobUploadResult.error);
+                showNotification('Warning: Images are temporary and may expire', 'warning');
+            } else {
+                showNotification('Images saved to permanent storage!', 'success');
+                console.log(`✅ Uploaded ${blobUploadResult.uploadedImages.length} images to blob storage`);
+            }
+
+            // Use blob URLs if available, otherwise use original URLs
+            const finalImageUrls = blobUploadResult.success
+                ? blobUploadResult.uploadedImages.map(img => img.blobUrl)
+                : validImageUrls;
+
             // Save new images to sessionStorage and display all images
-            saveImagesToStorage(validImageUrls);
+            saveImagesToStorage(finalImageUrls, blobUploadResult.galleryId);
             const allStoredImages = getStoredImages();
             displayStoredImages(allStoredImages);
 
@@ -411,12 +428,27 @@ document.addEventListener('DOMContentLoaded', function() {
      * Save images to sessionStorage
      * @param {Array} newImages - Array of new image URLs to add
      */
-    function saveImagesToStorage(newImages) {
+    function saveImagesToStorage(newImages, galleryId = null) {
         try {
             const existingImages = getStoredImages();
-            const allImages = [...existingImages, ...newImages];
+
+            // Create image objects with metadata
+            const imageObjects = newImages.map((url, index) => ({
+                url: url,
+                galleryId: galleryId,
+                timestamp: Date.now(),
+                index: index
+            }));
+
+            const allImages = [...existingImages, ...imageObjects];
             sessionStorage.setItem('omoideArtImages', JSON.stringify(allImages));
-            console.log(`Saved ${newImages.length} new images. Total: ${allImages.length}`);
+
+            // Also save gallery ID for potential future use
+            if (galleryId) {
+                sessionStorage.setItem('lastGalleryId', galleryId);
+            }
+
+            console.log(`Saved ${newImages.length} new images to gallery ${galleryId}. Total: ${allImages.length}`);
         } catch (error) {
             console.warn('Error saving to sessionStorage:', error);
             alert('Images generated successfully but cannot be saved due to browser storage limits. Images will be lost on page refresh.');
@@ -427,7 +459,7 @@ document.addEventListener('DOMContentLoaded', function() {
      * Display stored images from previous rolls
      * @param {Array} imageUrls - Array of image URLs to display
      */
-    function displayStoredImages(imageUrls) {
+    function displayStoredImages(imageData) {
         const gallerySection = document.getElementById('gallery-section');
         const galleryGrid = document.getElementById('gallery-grid');
 
@@ -438,7 +470,11 @@ document.addEventListener('DOMContentLoaded', function() {
         galleryGrid.innerHTML = '';
 
         // Create gallery items for all stored images
-        imageUrls.forEach((imageUrl, index) => {
+        imageData.forEach((item, index) => {
+            // Handle both old format (just URLs) and new format (objects with metadata)
+            const imageUrl = typeof item === 'string' ? item : item.url;
+            const galleryId = typeof item === 'object' ? item.galleryId : null;
+
             const galleryItem = document.createElement('div');
             galleryItem.className = 'gallery-item';
 
@@ -446,8 +482,8 @@ document.addEventListener('DOMContentLoaded', function() {
             img.src = imageUrl;
             img.alt = `Generated artwork ${index + 1}`;
 
-            // Add click handler for lightbox
-            img.addEventListener('click', () => openLightbox(imageUrl));
+            // Add click handler for lightbox (pass both URL and gallery ID)
+            img.addEventListener('click', () => openLightbox(imageUrl, galleryId));
 
             galleryItem.appendChild(img);
             galleryGrid.appendChild(galleryItem);
@@ -749,6 +785,50 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Show notification
         showNotification('Service temporarily unavailable. Please try again in a few minutes.', 'warning');
+    }
+
+    /**
+     * Upload images to Vercel Blob storage for persistence
+     */
+    async function uploadImagesToBlobStorage(imageUrls) {
+        try {
+            const response = await fetch('/api/upload-images', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    imageUrls: imageUrls,
+                    galleryId: generateGalleryId()
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `Upload failed: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result;
+
+        } catch (error) {
+            console.error('Blob upload error:', error);
+            return {
+                success: false,
+                error: error.message,
+                uploadedImages: [],
+                galleryId: null
+            };
+        }
+    }
+
+    /**
+     * Generate a unique gallery ID based on timestamp and random string
+     */
+    function generateGalleryId() {
+        const timestamp = Date.now();
+        const randomStr = Math.random().toString(36).substring(2, 8);
+        return `gallery-${timestamp}-${randomStr}`;
     }
 
 });
