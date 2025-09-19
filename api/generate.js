@@ -41,7 +41,9 @@ async function triggerWebhookGeneration(galleryId, userInputs, baseUrl) {
     });
 
     // Don't wait for webhook responses - fire and forget
-    Promise.all(webhookPromises);
+    Promise.all(webhookPromises).catch(error => {
+      console.error('❌ Failed to trigger all webhooks:', error);
+    });
 
     console.log('✅ Webhook generation triggered for 4 images');
 
