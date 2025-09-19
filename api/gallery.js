@@ -66,10 +66,10 @@ module.exports = async function handler(req, res) {
       // Create new gallery data if no existing metadata
       // For the fireworks gallery, manually include the generated images
       let images = [
-        { index: 1, status: 'pending' },
-        { index: 2, status: 'pending' },
-        { index: 3, status: 'pending' },
-        { index: 4, status: 'pending' }
+        { index: 1, status: 'pending', requestId: null },
+        { index: 2, status: 'pending', requestId: null },
+        { index: 3, status: 'pending', requestId: null },
+        { index: 4, status: 'pending', requestId: null }
       ];
 
       // Special case for the fireworks gallery that was manually generated

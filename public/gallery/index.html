@@ -469,9 +469,10 @@
             }
         }
 
-        // Polling interval for live updates
-        let pollingInterval = null;
+        // Polling intervals for individual request IDs
+        let requestPollingIntervals = new Map();
         let isPolling = false;
+        let currentGallery = null;
 
         // Load gallery data with live updates
         async function loadGallery() {
@@ -490,11 +491,12 @@
                     throw new Error(data.message);
                 }
 
-                displayGallery(data.gallery);
+                currentGallery = data.gallery;
+                displayGallery(currentGallery);
 
-                // Start polling if gallery is still generating
-                if (data.gallery.status === 'generating' && !isPolling) {
-                    startPolling();
+                // Start polling for individual request IDs if gallery has pending images
+                if (hasGeneratingImages(currentGallery) && !isPolling) {
+                    startIndividualPolling();
                 }
 
             } catch (error) {
@@ -503,40 +505,208 @@
             }
         }
 
-        // Start polling for updates
-        function startPolling() {
+        // Check if gallery has images that are generating
+        function hasGeneratingImages(gallery) {
+            return gallery.images.some(image =>
+                image.status === 'generating' && image.requestId
+            );
+        }
+
+        // Start polling for individual request IDs
+        function startIndividualPolling() {
             if (isPolling) return;
 
             isPolling = true;
-            console.log('🔄 Starting live gallery updates...');
+            console.log('🔄 Starting individual request ID polling...');
 
-            pollingInterval = setInterval(async () => {
+            // Poll each image with a requestId that's generating
+            currentGallery.images.forEach(image => {
+                if (image.status === 'generating' && image.requestId) {
+                    startRequestPolling(image.requestId, image.index);
+                }
+            });
+        }
+
+        // Start polling for a specific request ID
+        function startRequestPolling(requestId, imageIndex) {
+            if (requestPollingIntervals.has(requestId)) return;
+
+            console.log(`🔍 Starting polling for request ${requestId} (image ${imageIndex})`);
+
+            const interval = setInterval(async () => {
                 try {
-                    const galleryId = getGalleryId();
-                    const response = await fetch(`/api/gallery?id=${galleryId}`);
+                    const response = await fetch(`/api/check-status?requestId=${requestId}`);
                     const data = await response.json();
 
                     if (data.success) {
-                        updateGalleryProgress(data.gallery);
-
-                        // Stop polling when complete
-                        if (data.gallery.status === 'complete' || data.gallery.status === 'partial') {
-                            stopPolling();
-                        }
+                        await handleRequestStatusUpdate(requestId, imageIndex, data);
                     }
                 } catch (error) {
-                    console.error('Polling error:', error);
+                    console.error(`Polling error for request ${requestId}:`, error);
                 }
-            }, 3000); // Poll every 3 seconds
+            }, 5000); // Poll every 5 seconds
+
+            requestPollingIntervals.set(requestId, interval);
         }
 
-        // Stop polling
-        function stopPolling() {
-            if (pollingInterval) {
-                clearInterval(pollingInterval);
-                pollingInterval = null;
+        // Handle status update for individual request
+        async function handleRequestStatusUpdate(requestId, imageIndex, statusData) {
+            const status = statusData.status || statusData.data?.status;
+
+            console.log(`📊 Request ${requestId} status: ${status}`);
+
+            if (status === 'completed' || status === 'succeeded') {
+                // Stop polling for this request
+                stopRequestPolling(requestId);
+
+                // Extract image URLs from response
+                const imageUrl = extractImageUrl(statusData.data);
+
+                if (imageUrl) {
+                    // Update gallery metadata with completed image
+                    await updateGalleryImage(imageIndex, requestId, 'completed', imageUrl);
+
+                    // Update UI
+                    updateImageCard(imageIndex, 'completed', imageUrl);
+
+                    console.log(`✅ Image ${imageIndex} completed: ${imageUrl}`);
+                } else {
+                    console.error(`❌ Image ${imageIndex} completed but no URL found`);
+                    await updateGalleryImage(imageIndex, requestId, 'failed');
+                    updateImageCard(imageIndex, 'failed');
+                }
+            } else if (status === 'failed' || status === 'error') {
+                // Stop polling and mark as failed
+                stopRequestPolling(requestId);
+                await updateGalleryImage(imageIndex, requestId, 'failed');
+                updateImageCard(imageIndex, 'failed');
+
+                console.log(`❌ Image ${imageIndex} failed`);
+            }
+
+            // Check if all images are done
+            checkGalleryCompletion();
+        }
+
+        // Extract image URL from Wavespeed response
+        function extractImageUrl(data) {
+            // Handle different response formats from Wavespeed API
+            if (data.outputs && data.outputs[0] && data.outputs[0].url) {
+                return data.outputs[0].url;
+            }
+            if (data.output && data.output.url) {
+                return data.output.url;
+            }
+            if (data.url) {
+                return data.url;
+            }
+            return null;
+        }
+
+        // Update gallery metadata via API
+        async function updateGalleryImage(imageIndex, requestId, status, imageUrl = null) {
+            try {
+                const galleryId = getGalleryId();
+                const updateData = {
+                    galleryId,
+                    imageIndex,
+                    requestId,
+                    status
+                };
+
+                if (imageUrl) {
+                    updateData.webUrl = imageUrl;
+                    updateData.printUrl = imageUrl;
+                }
+
+                const response = await fetch('/api/update-gallery', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+
+                const result = await response.json();
+                if (!result.success) {
+                    console.error('Failed to update gallery metadata:', result.message);
+                }
+            } catch (error) {
+                console.error('Error updating gallery metadata:', error);
+            }
+        }
+
+        // Stop polling for a specific request ID
+        function stopRequestPolling(requestId) {
+            const interval = requestPollingIntervals.get(requestId);
+            if (interval) {
+                clearInterval(interval);
+                requestPollingIntervals.delete(requestId);
+                console.log(`🛑 Stopped polling for request ${requestId}`);
+            }
+        }
+
+        // Check if gallery is complete and stop all polling
+        function checkGalleryCompletion() {
+            if (requestPollingIntervals.size === 0) {
                 isPolling = false;
-                console.log('✅ Gallery updates complete');
+                console.log('✅ All images completed - polling stopped');
+            }
+        }
+
+        // Stop all polling
+        function stopPolling() {
+            // Stop all individual request polling
+            requestPollingIntervals.forEach((interval, requestId) => {
+                clearInterval(interval);
+                console.log(`🛑 Stopped polling for request ${requestId}`);
+            });
+            requestPollingIntervals.clear();
+            isPolling = false;
+            console.log('✅ All polling stopped');
+        }
+
+        // Update individual image card in UI
+        function updateImageCard(imageIndex, status, imageUrl = null) {
+            const card = document.querySelector(`[data-index="${imageIndex}"]`);
+            if (!card) return;
+
+            if (status === 'completed' && imageUrl) {
+                card.innerHTML = `
+                    <div class="image-container">
+                        <img src="${imageUrl}" alt="Omoide Art ${imageIndex}" class="gallery-image" loading="lazy">
+                        <div class="image-overlay">
+                            <button class="view-fullsize" onclick="viewFullsize('${imageUrl}')">
+                                View Full Size
+                            </button>
+                        </div>
+                    </div>
+                    <div class="image-info">
+                        <div class="image-number">Artwork ${imageIndex}</div>
+                        <div class="image-status">✅ Complete</div>
+                    </div>
+                `;
+                card.className = 'image-card completed newly-completed';
+
+                // Remove animation class after 1 second
+                setTimeout(() => card.classList.remove('newly-completed'), 1000);
+
+            } else if (status === 'failed') {
+                card.innerHTML = `
+                    <div class="image-container">
+                        <div class="error-placeholder">
+                            <p>❌ Generation failed</p>
+                            <button class="retry-button" onclick="retryImage(${imageIndex})">
+                                Retry
+                            </button>
+                        </div>
+                    </div>
+                    <div class="image-info">
+                        <div class="image-number">Artwork ${imageIndex}</div>
+                        <div class="image-status">Failed</div>
+                    </div>
+                `;
+                card.className = 'image-card failed';
             }
         }
 
@@ -691,23 +861,20 @@
             }).join('');
         }
 
-        // Update gallery progress (called by polling)
+        // Update gallery progress (legacy fallback)
         function updateGalleryProgress(gallery) {
             console.log(`🔄 Gallery update: ${gallery.progress.completed}/4 completed`);
+
+            // Update current gallery reference
+            currentGallery = gallery;
 
             updateProgressIndicator(gallery);
             updateImagesGrid(gallery);
 
-            // Animate new completed images
-            gallery.images.forEach(image => {
-                if (image.status === 'completed') {
-                    const card = document.querySelector(`[data-index="${image.index}"]`);
-                    if (card && !card.classList.contains('completed')) {
-                        card.classList.add('newly-completed');
-                        setTimeout(() => card.classList.remove('newly-completed'), 1000);
-                    }
-                }
-            });
+            // Start individual polling for new request IDs
+            if (hasGeneratingImages(gallery) && !isPolling) {
+                startIndividualPolling();
+            }
         }
 
         // Show error state

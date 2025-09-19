@@ -35,9 +35,39 @@ async function triggerWebhookGeneration(galleryId, userInputs, baseUrl) {
           aspectRatio: userInputs.aspectRatio || '1:1',
           userInputs
         })
+      }).then(async response => {
+        if (response.ok) {
+          const result = await response.json();
+
+          // Update gallery with the request ID
+          if (result.success && result.requestId) {
+            console.log(`📝 Updating gallery ${galleryId} - Image ${index + 1} with requestId: ${result.requestId}`);
+
+            try {
+              await fetch(`${baseUrl}/api/update-gallery`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  galleryId,
+                  imageIndex: index + 1,
+                  requestId: result.requestId,
+                  status: 'generating'
+                })
+              });
+            } catch (updateError) {
+              console.error(`❌ Failed to update gallery for image ${index + 1}:`, updateError);
+            }
+          }
+
+          return result;
+        } else {
+          throw new Error(`Webhook failed with status ${response.status}`);
+        }
       }).catch(error => {
         console.error(`❌ Failed to trigger webhook for image ${index + 1}:`, error);
-        return null; // Return null instead of undefined to indicate failure
+        return null; // Return null to indicate failure
       });
     });
 
