@@ -2,7 +2,7 @@
 
 > Your Japan memories, painted by AI.
 
-[![Deployed with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fyour-username%2Fomoide-art)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-omoide--art.shop-blue?style=for-the-badge)](https://omoide-art.shop)
 
 ![App Screenshot](https://via.placeholder.com/800x450.png?text=Add+A+Screenshot+of+Omoide+Art+Here)
 *(This README is ready for you to add a screenshot of your live application!)*
@@ -31,7 +31,9 @@ This MVP was built with a focus on speed, scalability, and a modern developer ex
 * **Frontend:** HTML, CSS, JavaScript
 * **Code Generation Assistance:** Google Gemini & Anthropic Claude
 * **Hosting & Serverless Backend:** Vercel
-* **AI Image Generation:** Google Cloud Vertex AI (Imagen) API
+* **AI Image Generation:** Wavespeed AI (Imagen 4.0 Ultra)
+* **AI Prompt Enhancement:** Google Gemini 1.5 Flash
+* **Storage:** Vercel Blob (for gallery metadata)
 * **Source Control:** GitHub
 
 ## Getting Started (Local Development)
@@ -40,7 +42,7 @@ To get a local copy up and running, follow these steps.
 
 ### Prerequisites
 
-You will need an API key from a Google Cloud project with the Vertex AI API enabled.
+You will need API keys from Google Gemini and Wavespeed AI for image generation.
 
 ### Installation
 
@@ -56,9 +58,11 @@ You will need an API key from a Google Cloud project with the Vertex AI API enab
     ```sh
     npm install -g vercel
     ```
-4.  Create a local environment file named `.env.local`. This file will store your secret API key and must **not** be committed to GitHub.
+4.  Create a local environment file named `.env.local`. This file will store your secret API keys and must **not** be committed to GitHub.
     ```
-    GOOGLE_API_KEY='Your-Secret-API-Key-Goes-Here'
+    GEMINI_API_KEY='Your-Gemini-API-Key-Goes-Here'
+    WAVESPEED_API_KEY='Your-Wavespeed-API-Key-Goes-Here'
+    WEBHOOK_SECRET='webhook-secret-key'
     ```
 5.  Run the local development server:
     ```sh
