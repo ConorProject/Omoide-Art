@@ -7,9 +7,9 @@ function aspectRatioToSize(aspectRatio) {
   return sizeMap[aspectRatio] || "4096*4096";
 }
 
-async function generateSingleImage(prompt, aspectRatio = '1:1') {
+async function submitImageJob(prompt, aspectRatio = '1:1') {
   try {
-    console.log('🚀 Generating single image...');
+    console.log('🚀 Submitting async image job...');
 
     const url = "https://api.wavespeed.ai/api/v3/bytedance/seedream-v4/sequential";
     const headers = {
@@ -22,7 +22,7 @@ async function generateSingleImage(prompt, aspectRatio = '1:1') {
       "size": aspectRatioToSize(aspectRatio),
       "max_images": 1,
       "enable_base64_output": false,
-      "enable_sync_mode": true
+      "enable_sync_mode": false
     };
 
     const response = await fetch(url, {
@@ -37,15 +37,15 @@ async function generateSingleImage(prompt, aspectRatio = '1:1') {
 
     const result = await response.json();
 
-    if (!result.data || !result.data.outputs || result.data.outputs.length === 0) {
-      throw new Error('No images returned from API');
+    if (!result.data || !result.data.id) {
+      throw new Error('No request ID returned from API');
     }
 
-    console.log(`✅ Generated 1 image successfully`);
-    return result.data.outputs[0];
+    console.log(`✅ Job submitted with request_id: ${result.data.id}`);
+    return result.data.id;
 
   } catch (error) {
-    console.error(`❌ Single image generation failed: ${error.message}`);
+    console.error(`❌ Image job submission failed: ${error.message}`);
     throw error;
   }
 }
@@ -75,18 +75,18 @@ module.exports = async function handler(req, res) {
 
     console.log(`🎨 Processing webhook for gallery ${galleryId}, image ${imageIndex}...`);
 
-    // Generate single image
-    const imageUrl = await generateSingleImage(enhancedPrompt, aspectRatio);
+    // Submit async image job
+    const requestId = await submitImageJob(enhancedPrompt, aspectRatio);
 
     console.log(`✅ Webhook completed for image ${imageIndex} in gallery ${galleryId}`);
-    console.log(`📸 Generated image URL: ${imageUrl}`);
+    console.log(`📋 Job submitted with request_id: ${requestId}`);
 
     return res.status(200).json({
       success: true,
       galleryId,
       imageIndex,
-      imageUrl: imageUrl,
-      message: `Image ${imageIndex} generated successfully`
+      requestId: requestId,
+      message: `Image ${imageIndex} job submitted successfully`
     });
 
   } catch (error) {

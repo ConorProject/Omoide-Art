@@ -1,82 +1,71 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+async function checkWavespeedStatus(requestId) {
+  try {
+    console.log(`🔍 Checking status for request: ${requestId}`);
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+    const url = `https://api.wavespeed.ai/api/v3/predictions/${requestId}/result`;
+    const headers = {
+      "Authorization": `Bearer ${process.env.WAVESPEED_API_KEY}`
+    };
 
-// Load environment variables
-const envPath = path.join(path.dirname(__dirname), '.env.local');
-const envContent = fs.readFileSync(envPath, 'utf8');
-const envVars = {};
-envContent.split('\n').forEach(line => {
-  const [key, value] = line.split('=');
-  if (key && value) envVars[key] = value;
-});
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: headers
+    });
 
-// Simple status check endpoint for async job polling
-export default async function handler(req, res) {
+    if (!response.ok) {
+      throw new Error(`API Error ${response.status}: ${await response.text()}`);
+    }
+
+    const result = await response.json();
+
+    // According to Wavespeed docs: result.data.status is the status field
+    const status = result.data?.status || 'unknown';
+    console.log(`📊 Status for ${requestId}: ${status}`);
+
+    return result;
+
+  } catch (error) {
+    console.error(`❌ Failed to check status for ${requestId}:`, error.message);
+    throw error;
+  }
+}
+
+module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
-    const { jobId } = req.query;
+    const { requestId } = req.query;
 
-    if (!jobId) {
-      return res.status(400).json({ message: 'Job ID required' });
+    if (!requestId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Request ID is required'
+      });
     }
 
-    console.log(`🔍 Checking status for job: ${jobId}`);
+    console.log(`🔍 Checking status for request: ${requestId}`);
 
-    // Check job status via Wavespeed API
-    const pollUrl = `https://api.wavespeed.ai/api/v3/predictions/${jobId}/result`;
+    const result = await checkWavespeedStatus(requestId);
 
-    const response = await fetch(pollUrl, {
-      headers: {
-        "Authorization": `Bearer ${envVars.WAVESPEED_API_KEY}`
-      }
+    // Return the status result directly to the client
+    return res.status(200).json({
+      success: true,
+      requestId: requestId,
+      status: result.status || result.data?.status || 'unknown',
+      data: result
     });
-
-    if (!response.ok) {
-      console.log(`❌ Status check failed: ${response.status}`);
-      return res.status(200).json({
-        status: 'error',
-        message: 'Unable to check job status'
-      });
-    }
-
-    const result = await response.json();
-
-    // Extract status from the correct data structure per Wavespeed documentation
-    const data = result.data;
-    const jobStatus = data?.status || 'pending';
-    const outputs = data?.outputs || []; // This is an array per the docs
-
-    console.log(`📊 Job ${jobId} status: ${jobStatus}`);
-
-    if (jobStatus === 'completed') {
-      return res.status(200).json({
-        status: 'completed',
-        imageUrls: outputs
-      });
-    } else if (jobStatus === 'failed') {
-      return res.status(200).json({
-        status: 'failed',
-        message: data?.error || 'Image generation failed'
-      });
-    } else {
-      return res.status(200).json({
-        status: 'pending',
-        message: 'Image generation in progress...'
-      });
-    }
 
   } catch (error) {
-    console.error('Status check error:', error);
-    return res.status(200).json({
-      status: 'error',
-      message: 'Unable to check job status'
+    console.error('=== CHECK STATUS ERROR ===');
+    console.error('Error:', error.message);
+    console.error('=== END ERROR ===');
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to check status',
+      error: error.message
     });
   }
-}
+};
