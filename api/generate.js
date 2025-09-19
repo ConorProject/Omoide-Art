@@ -37,15 +37,14 @@ async function triggerWebhookGeneration(galleryId, userInputs, baseUrl) {
         })
       }).catch(error => {
         console.error(`❌ Failed to trigger webhook for image ${index + 1}:`, error);
+        return null; // Return null instead of undefined to indicate failure
       });
     });
 
-    // Don't wait for webhook responses - fire and forget
-    Promise.all(webhookPromises).catch(error => {
-      console.error('❌ Failed to trigger all webhooks:', error);
-    });
-
-    console.log('✅ Webhook generation triggered for 4 images');
+    // Wait for all webhook requests to be sent
+    const results = await Promise.all(webhookPromises);
+    const successful = results.filter(r => r !== null).length;
+    console.log(`✅ Successfully triggered ${successful}/4 webhooks`);
 
   } catch (error) {
     console.error('❌ Failed to trigger webhook generation:', error);
@@ -78,8 +77,11 @@ module.exports = async function handler(req, res) {
     const host = req.headers.host;
     const baseUrl = `${protocol}://${host}`;
 
+    // Debug logging for webhook URL construction
+    console.log(`🔍 Webhook baseUrl: ${baseUrl}`);
+
     // Trigger async image generation (fire and forget)
-    triggerWebhookGeneration(galleryId, userInputs, baseUrl);
+    await triggerWebhookGeneration(galleryId, userInputs, baseUrl);
 
     const magicLink = `${host}/gallery/${galleryId}`;
 
