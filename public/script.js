@@ -20,16 +20,8 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', async function(event) {
         // Prevent the default form submission behavior (page reload)
         event.preventDefault();
-        
-        try {
-            // Check if user has reached roll limit
-            const storedImages = getStoredImages();
-            const rollsUsed = Math.ceil(storedImages.length / 4);
-            if (rollsUsed >= 3) {
-                alert('You have already used all 3 rolls. Close this tab to start fresh.');
-                return;
-            }
 
+        try {
             // Gather all form data
             const formData = collectFormData();
 
@@ -38,11 +30,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Please fill in all fields and select at least one atmosphere and feeling.');
                 return;
             }
-            
+
             // Show loading state
             showLoadingState();
-            
-            // Send data to our backend API to start job
+
+            // Update loading message for immediate gallery creation
+            showNotification('Creating your Magic Link gallery...', 'info');
+
+            // Send data to our backend API for immediate Magic Link generation
             const response = await fetch('/api/generate', {
                 method: 'POST',
                 headers: {
@@ -58,63 +53,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(errorData.message || `Server error: ${response.status}`);
             }
 
-            // Parse the job submission response
-            const jobData = await response.json();
+            // Parse the gallery creation response
+            const galleryData = await response.json();
 
-            // Check if we got a job ID
-            if (!jobData.jobId) {
-                throw new Error('Failed to start image generation job');
+            // Check if we got a Magic Link
+            if (!galleryData.success || !galleryData.galleryId) {
+                throw new Error('Failed to create gallery');
             }
 
-            console.log(`🚀 Job started: ${jobData.jobId}`);
-            showNotification('4K image generation started! This may take a few minutes...', 'info');
+            console.log(`🎨 Gallery created immediately: ${galleryData.galleryId}`);
+            console.log(`📝 Status: ${galleryData.status}`);
+            showNotification('Gallery ready! Your artwork is being created. Redirecting...', 'success');
 
-            // Start polling for job completion
-            const imageUrls = await pollJobStatus(jobData.jobId);
+            // Quick redirect since gallery is created immediately
+            setTimeout(() => {
+                window.location.href = `/gallery/${galleryData.galleryId}`;
+            }, 800);
 
-            // Filter out any null/invalid URLs
-            const validImageUrls = imageUrls.filter(url => url && typeof url === 'string');
-
-            if (validImageUrls.length === 0) {
-                throw new Error('No valid images were generated. Please try again.');
-            }
-
-            // Upload images to blob storage for persistence
-            showNotification('Uploading images to permanent storage...', 'info');
-            const blobUploadResult = await uploadImagesToBlobStorage(validImageUrls);
-
-            if (!blobUploadResult.success) {
-                console.warn('Blob upload failed, continuing with temporary URLs:', blobUploadResult.error);
-                showNotification('Warning: Images are temporary and may expire', 'warning');
-            } else {
-                showNotification('Images saved to permanent storage!', 'success');
-                console.log(`✅ Uploaded ${blobUploadResult.uploadedImages.length} images to blob storage`);
-            }
-
-            // Use blob URLs if available, otherwise use original URLs
-            const finalImageUrls = blobUploadResult.success
-                ? blobUploadResult.uploadedImages.map(img => img.blobUrl)
-                : validImageUrls;
-
-            // Save new images to sessionStorage and display all images
-            saveImagesToStorage(finalImageUrls, blobUploadResult.galleryId);
-            const allStoredImages = getStoredImages();
-            displayStoredImages(allStoredImages);
-
-            // Update roll counter
-            updateRollCounter(allStoredImages.length);
-
-            // Show success notification
-            showNotification(`Successfully generated ${validImageUrls.length} image${validImageUrls.length > 1 ? 's' : ''}!`, 'success');
-
-            // Scroll to the gallery to show the result
-            document.getElementById('gallery-section').scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
         } catch (error) {
             // Handle any errors that occurred
-            console.error('Error generating image:', error);
+            console.error('Error creating gallery:', error);
             alert(`Sorry, something went wrong: ${error.message}. Please try again.`);
-            
+
         } finally {
             // Always remove loading state, whether success or failure
             hideLoadingState();

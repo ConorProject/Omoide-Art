@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "> Your Japan memories, painted by AI.",
   "main": "script.js",
-  "type": "module",
   "scripts": {
     "build": "echo \"Static files ready\"",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -19,5 +18,8 @@
     "url": "https://github.com/ConorProject/omoide-art/issues"
   },
   "homepage": "https://github.com/ConorProject/omoide-art#readme",
-  "dependencies": {}
+  "dependencies": {
+    "@vercel/blob": "^2.0.0",
+    "sharp": "^0.33.5"
+  }
 }

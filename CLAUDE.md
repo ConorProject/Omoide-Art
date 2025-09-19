@@ -4,18 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Omoide Art is a web application that transforms personal Japan travel memories into AI-generated shin-hanga style artwork. Users complete a guided 5-step questionnaire to describe their memory, and the system uses advanced AI preprocessing (Gemini API) to enhance prompts before generating print-quality 4K artwork via Wavespeed AI. Features async job architecture for reliable image generation and Japanese-themed notifications.
+Omoide Art is a web application that transforms personal Japan travel memories into AI-generated shin-hanga style artwork. Users complete a guided 5-step questionnaire to describe their memory, and the system uses advanced AI preprocessing (Gemini API) to enhance prompts before generating high-resolution 2048x2048 artwork via Wavespeed AI. The system now features a Magic Link gallery architecture with print-on-demand capabilities.
 
 ## Current Status
-- ✅ HTML structure (public/index.html) - Complete guided memory form with season selection
-- ✅ CSS styling (public/style.css) - Japanese-inspired responsive design with dynamic image containers
-- ✅ JavaScript interactivity (script.js) - Full form handling with roll tracking and sessionStorage
+- ✅ HTML structure (public/index.html) - Complete guided memory form
+- ✅ CSS styling (public/style.css) - Japanese-inspired responsive design with square image containers
+- ✅ JavaScript interactivity (script.js) - Form handling with Magic Link redirect
 - ✅ AI preprocessing pipeline - Gemini API transforms basic inputs into sophisticated artistic prompts
-- ✅ 4K image generation - Wavespeed AI producing 4096x4096 print-quality shin-hanga artwork
-- ✅ 3-roll system - Users get 3 rolls of 4 images each (12 total images per session)
-- ✅ Image persistence - SessionStorage tracks generated images across page refreshes
-- ✅ Error handling & retry logic - Robust API timeout handling with automatic retries
-- ✅ Deployment ready - Vercel serverless functions configured and tested
+- ✅ High-resolution image generation - Wavespeed AI producing 2048x2048 shin-hanga artwork
+- ✅ Magic Link gallery system - Permanent URLs for sharing and revisiting galleries
+- ✅ Tiered storage - Print-quality originals + watermarked web versions via Vercel Blob
+- ✅ 30-day expiration system - Automated cleanup with purchase protection
+- ✅ Print-on-demand integration - Prodigi API foundation for canvas and photo prints
+- ✅ Deployment ready - Vercel serverless functions with cron jobs
 
 ## Development Commands
 
@@ -33,35 +34,44 @@ Create `.env.local` for API keys:
 ```
 GEMINI_API_KEY='Your-Gemini-API-Key-Goes-Here'
 WAVESPEED_API_KEY='Your-Wavespeed-API-Key-Goes-Here'
+BLOB_READ_WRITE_TOKEN='Your-Vercel-Blob-Token-Goes-Here'
+PRODIGI_API_KEY='Your-Prodigi-API-Key-Goes-Here'
+PRODIGI_SANDBOX='true'
+CLEANUP_SECRET='your-cleanup-secret-key'
+CRON_SECRET='your-cron-secret-key'
 ```
 
 ## Architecture
 
-This is a frontend-focused application with serverless backend:
+This is a Magic Link gallery system with serverless backend:
 
-- `index.html` - Main HTML structure with 6-question memory form across 3 "acts" including season selection
-- `script.js` - Client-side JavaScript for form interactions, roll tracking, and sessionStorage management
-- `style.css` - Complete styling using CSS custom properties and responsive design
-- `/api/generate.js` - Vercel serverless function handling AI preprocessing and image generation
-- No build process - runs directly in the browser
+- `public/index.html` - Main HTML structure with 5-question memory form across 3 "acts"
+- `public/script.js` - Client-side JavaScript for form submission and Magic Link redirect
+- `public/style.css` - Complete styling using CSS custom properties and responsive design
+- `public/gallery/index.html` - Dynamic gallery display page with print ordering
+- `/api/generate.js` - Synchronous gallery creation with blob storage
+- `/api/gallery.js` - Gallery data retrieval with expiration checking
+- `/api/cleanup-expired.js` - Automated cleanup of expired galleries
+- `/api/cron-cleanup.js` - Daily cron job for maintenance
+- `/api/prodigi-orders.js` - Print-on-demand order management
 
 ## Key Technical Details
 
 ### Form Structure
 The memory questionnaire follows a storytelling approach:
-- **Act I (The Scene)**: Location input + season selection + atmosphere selection (5 radio buttons)
+- **Act I (The Scene)**: Location input + atmosphere selection (5 radio buttons)
 - **Act II (The Subject)**: Main focus text input
 - **Act III (The Magic)**: Unique detail textarea + feeling tags (6 multi-select buttons)
-- **Canvas Choice**: Aspect ratio selection (square, portrait, landscape)
 
-### JavaScript Implementation
-- Event-driven button state management
-- Single-select atmosphere and season buttons (radio-like behavior)
-- Multi-select feeling tags (checkbox-like behavior)
-- 3-roll system with roll counter and progress tracking
-- SessionStorage for image persistence across page refreshes
-- Dynamic gallery with lightbox functionality
-- Robust error handling and user feedback
+### Magic Link Gallery Flow
+1. User submits memory form
+2. AI enhances prompts via Gemini API
+3. Wavespeed AI generates 4 high-resolution images synchronously
+4. System creates watermarked web versions using Sharp
+5. Both versions uploaded to Vercel Blob storage
+6. Gallery metadata created with 30-day expiration
+7. User redirected to permanent Magic Link: `/gallery/{uuid}`
+8. Gallery displays memory details + artwork with print ordering
 
 ### Styling Approach
 - Japanese-inspired design (washi paper backgrounds, hanko red accents)
@@ -71,58 +81,113 @@ The memory questionnaire follows a storytelling approach:
 
 ## Technical Implementation
 - **Frontend**: Vanilla HTML/CSS/JS with Japanese-inspired design
-- **Backend**: Vercel serverless function at `/api/generate.js`
+- **Backend**: Vercel serverless functions with blob storage
 - **AI Pipeline**:
-  - **Text Enhancement**: Gemini 1.5 Flash transforms user inputs into sophisticated prompts (1000 token limit)
-  - **Image Generation**: Wavespeed AI (Seedream-v4 Sequential) creates 4K print-quality artwork
-- **Art Style**: Modern shin-hanga woodblock print aesthetic in the style of Kawase Hasui
-- **Display**: Dynamic gallery with lightbox, roll tracking, and sessionStorage persistence
+  - **Text Enhancement**: Gemini 1.5 Flash transforms user inputs into sophisticated prompts
+  - **Image Generation**: Wavespeed AI (Imagen 4.0 Ultra) creates 2048x2048 artwork
+- **Art Style**: Modern shin-hanga woodblock print aesthetic
+- **Storage**: Vercel Blob with tiered print/web versions
+- **Print Integration**: Prodigi API for canvas prints, photo prints, etc.
 
 ## Recent Major Improvements
-- ✅ **4K Resolution Upgrade**: Upgraded to 4096x4096 print-quality images (4x pixel density)
-- ✅ **3-Roll System**: Implemented session-based roll tracking with 12 total images per user
-- ✅ **SessionStorage Persistence**: Images persist across page refreshes and browser sessions
-- ✅ **Error Handling & Retries**: Robust API timeout handling with automatic retry logic
-- ✅ **Token Limit Fix**: Increased Gemini output tokens from 200 to 1000 for complete prompts
-- ✅ **Season Selection**: Added seasonal context to memory form for enhanced artwork
-- ✅ **Dynamic Gallery**: Live image gallery with lightbox, download, and roll counter
-- ✅ **API Optimization**: Switched to sync mode for faster, more reliable image generation
+- ✅ **Magic Link Architecture**: Complete redesign from async polling to synchronous galleries
+- ✅ **Vercel Blob Integration**: Persistent storage for print and web versions
+- ✅ **Watermark System**: Automated watermarking for web versions using Sharp
+- ✅ **30-Day Expiration**: Galleries expire unless purchased, with automated cleanup
+- ✅ **Print-on-Demand Foundation**: Prodigi API integration for physical products
+- ✅ **Gallery Display System**: Beautiful responsive gallery pages with memory context
+- ✅ **Automated Maintenance**: Daily cron jobs for expired gallery cleanup
+- ✅ **Dynamic Routing**: Vercel rewrites for `/gallery/{id}` URLs
 
 ## System Architecture
 
-### AI Processing Pipeline
-1. **User Input**: 6-question memory form captures location, season, focus, details, atmosphere, feelings, aspect ratio
-2. **AI Enhancement**: Gemini 1.5 Flash transforms basic inputs using expert art director instructions (1000 tokens)
-3. **Image Generation**: Enhanced prompts sent to Wavespeed AI (Seedream-v4 Sequential) for 4K rendering
-4. **Output**: Print-quality 4096x4096 shin-hanga style artwork (4 variations per roll)
-5. **Storage**: Images stored in sessionStorage with roll tracking and persistence
+### Magic Link Gallery Pipeline
+1. **User Input**: 5-question memory form captures location, focus, details, atmosphere, feelings
+2. **AI Enhancement**: Gemini 1.5 Flash transforms basic inputs using expert art director instructions
+3. **Synchronous Generation**: Wavespeed AI creates 4 variations in 2K resolution
+4. **Image Processing**: Sharp creates watermarked web versions (2048x2048) + preserves print versions
+5. **Blob Storage**: Vercel Blob stores both versions in organized gallery structure
+6. **Metadata Creation**: Gallery metadata with expiration, user inputs, and image references
+7. **Magic Link**: Permanent shareable URL with 30-day expiration protection
+
+### Storage Structure
+```
+galleries/
+  {gallery-id}/
+    metadata.json          # Gallery info, expiration, user inputs
+    print-1.jpg           # High-quality print version
+    print-2.jpg
+    print-3.jpg
+    print-4.jpg
+    web-1.jpg             # Watermarked web version
+    web-2.jpg
+    web-3.jpg
+    web-4.jpg
+```
 
 ### Cost Structure
 - **Gemini API**: ~$0.0001-0.0005 per prompt enhancement (negligible)
-- **Wavespeed AI**: $0.108 per 4K image generation (4 images per job using bytedance/seedream-v4/sequential)
-- **Total per generation**: $0.108 for 4 premium 4K print-ready images
-- **Exceptional value**: Print-quality 4K shin-hanga artwork at $0.027 per piece
+- **Wavespeed AI**: ~$0.058 per 2K image generation (4 images)
+- **Vercel Blob**: Storage costs for images and metadata
+- **Total**: Extremely cost-effective for professional-quality results
 
-## Future Considerations
-1. **Print-on-Demand Integration**: Prodigi API for canvas prints and art prints
-2. **Shopify Integration**: Payment processing for physical products
-3. **Product Mockups**: Show artwork on canvas/print products before purchase
-4. **Usage Controls**: Implement rate limiting for cost management
-5. **Enhanced UX**: Additional download formats and sharing functionality
+## Expiration & Cleanup System
 
-## Upcoming: Print-on-Demand Integration
+### 30-Day Gallery Lifecycle
+- Galleries created with 30-day expiration timestamp
+- Web versions watermarked, print versions preserved
+- Purchase protection prevents deletion of paid galleries
+- Daily cron job (`0 2 * * *`) cleans expired galleries
+- Manual cleanup API available with secret key authentication
 
-### Prodigi API Research Complete
-- **Perfect Image Match**: 4096×4096 images ideal for canvas printing (exceeds 2137×2137 requirement)
-- **Product Focus**: Canvas prints and art prints initially
-- **Integration Points**:
-  - Enhance existing lightbox with "Order Print" button
-  - Add product selection (canvas sizes: 10×10", 12×12", 16×16")
-  - Integrate quote API for real-time pricing
-  - Bridge to Shopify for payment processing
-- **Technical Architecture**:
-  - New `/api/prodigi-quote` endpoint for pricing
-  - Lightbox enhancement for product selection
-  - Shopify redirect for checkout and fulfillment
-- **Key Benefits**: Transform digital art into physical products, global shipping via Prodigi labs
-- let's do 2
+### Print-on-Demand Integration
+
+The system includes Prodigi API integration for physical product fulfillment:
+
+**Available Products:**
+- 8" x 10" Canvas Print - $24.99
+- 12" x 16" Canvas Print - $39.99
+- 8" x 10" Photo Print - $8.99
+- 12" x 16" Photo Print - $14.99
+
+**API Endpoints:**
+- `POST /api/prodigi-orders` - Product catalog, quotes, order creation
+- Gallery pages include "Order Prints" functionality
+- Sandbox/production environment support
+
+**Integration Status:**
+- ✅ API wrapper and product catalog
+- ✅ Quote generation system
+- ✅ Order creation pipeline
+- ⚠️ Requires Prodigi API credentials for activation
+- ⚠️ Needs full checkout UI and payment processing
+
+## Environment Variables Required
+
+### Core System
+- `GEMINI_API_KEY` - Google Gemini API for prompt enhancement
+- `WAVESPEED_API_KEY` - Wavespeed AI for image generation
+- `BLOB_READ_WRITE_TOKEN` - Vercel Blob storage access
+
+### Print Integration
+- `PRODIGI_API_KEY` - Prodigi print-on-demand service
+- `PRODIGI_SANDBOX` - Set to 'true' for testing
+
+### Maintenance
+- `CLEANUP_SECRET` - Secret key for manual cleanup API
+- `CRON_SECRET` - Vercel cron job authentication
+
+## Future Enhancements
+1. **Full Checkout Flow**: Complete UI for product selection and payment
+2. **Order Management**: Track purchases in gallery metadata
+3. **Enhanced Products**: Additional print formats and sizes
+4. **Analytics**: Gallery view tracking and usage metrics
+5. **Social Features**: Gallery sharing and discovery
+
+## Magic Link Benefits
+- **Permanent URLs**: Galleries never lose their links
+- **Mobile Optimized**: Responsive design for all devices
+- **Print Ready**: Immediate access to high-quality print versions
+- **Memory Context**: Display original memory inputs alongside artwork
+- **Expiration Protection**: 30-day purchase window with automated cleanup
+- **Cost Effective**: No ongoing storage costs for expired galleries

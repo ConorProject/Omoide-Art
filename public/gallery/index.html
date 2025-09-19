@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Omoide Art Gallery</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .gallery-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .gallery-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .gallery-title {
+            font-family: 'Noto Serif JP', serif;
+            font-size: clamp(2rem, 4vw, 2.5rem);
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .gallery-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            margin-bottom: 24px;
+        }
+
+        .expiry-notice {
+            background: linear-gradient(135deg, #FFF8F0 0%, #FFF2E6 100%);
+            border: 1px solid #F0C674;
+            border-radius: 12px;
+            padding: 16px 24px;
+            margin-bottom: 40px;
+            text-align: center;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+
+        .memory-details {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 40px;
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--border-color);
+        }
+
+        .memory-location {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 16px;
+        }
+
+        .memory-focus {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .memory-detail {
+            color: var(--text-light);
+            margin-bottom: 16px;
+            line-height: 1.7;
+        }
+
+        .memory-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .memory-tag {
+            background: var(--hover-bg);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+            margin-bottom: 60px;
+        }
+
+        .image-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-medium);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .image-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+        }
+
+        .image-container {
+            position: relative;
+            aspect-ratio: 1;
+            overflow: hidden;
+        }
+
+        .gallery-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition);
+        }
+
+        .image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .image-card:hover .image-overlay {
+            opacity: 1;
+        }
+
+        .view-fullsize {
+            background: white;
+            color: var(--text-primary);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .view-fullsize:hover {
+            background: var(--hover-bg);
+        }
+
+        .image-info {
+            padding: 20px;
+        }
+
+        .image-number {
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 8px;
+        }
+
+        .cta-section {
+            background: linear-gradient(135deg, var(--accent-color) 0%, #A63D40 100%);
+            border-radius: 20px;
+            padding: 48px;
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .cta-title {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .cta-description {
+            font-size: 1.1rem;
+            margin-bottom: 32px;
+            opacity: 0.95;
+            line-height: 1.7;
+        }
+
+        .cta-button {
+            background: white;
+            color: var(--accent-color);
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            color: var(--text-light);
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-light);
+        }
+
+        .error-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 32px;
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .progress-section {
+            background: linear-gradient(135deg, #FFF8F0 0%, #FFF2E6 100%);
+            border: 1px solid #F0C674;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .progress-header h3 {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .progress-header p {
+            color: var(--text-light);
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            height: 8px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, var(--accent-color) 0%, #A63D40 100%);
+            height: 100%;
+            border-radius: 20px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .generating-placeholder,
+        .pending-placeholder,
+        .error-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 40px 20px;
+            background: var(--hover-bg);
+            border-radius: 12px;
+        }
+
+        .generating-placeholder p,
+        .pending-placeholder p,
+        .error-placeholder p {
+            margin-top: 16px;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .retry-button {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: var(--transition);
+        }
+
+        .retry-button:hover {
+            background: #A63D40;
+        }
+
+        .image-status {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+
+        .image-card.newly-completed {
+            animation: imageComplete 1s ease;
+        }
+
+        @keyframes imageComplete {
+            0% {
+                transform: scale(0.95);
+                opacity: 0.7;
+            }
+            50% {
+                transform: scale(1.02);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .image-card.generating {
+            border: 2px solid var(--accent-color);
+            box-shadow: 0 0 20px rgba(191, 61, 65, 0.2);
+        }
+
+        .image-card.failed {
+            border: 2px solid #dc3545;
+            box-shadow: 0 0 20px rgba(220, 53, 69, 0.1);
+        }
+
+        .image-card.pending {
+            border: 2px solid #6c757d;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            .gallery-container {
+                padding: 20px 16px;
+            }
+
+            .images-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .memory-details {
+                padding: 24px;
+            }
+
+            .cta-section {
+                padding: 32px 24px;
+            }
+
+            .progress-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="gallery-container">
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <p>Loading your Omoide Art gallery...</p>
+        </div>
+
+        <div id="error" class="error" style="display: none;">
+            <h2 class="error-title">Gallery Not Found</h2>
+            <p>This gallery may have expired or the link is incorrect.</p>
+            <a href="/" class="back-link">← Create New Omoide Art</a>
+        </div>
+
+        <div id="gallery-content" style="display: none;">
+            <div class="gallery-header">
+                <h1 class="gallery-title">Your Omoide Art Gallery</h1>
+                <p class="gallery-subtitle">Beautiful memories transformed into traditional Japanese shin-hanga art</p>
+            </div>
+
+            <div id="expiry-notice" class="expiry-notice">
+                This gallery will expire in <strong id="time-remaining"></strong>.
+                Purchase now to preserve your memories forever.
+            </div>
+
+            <div id="memory-details" class="memory-details">
+                <!-- Memory details will be populated by JavaScript -->
+            </div>
+
+            <div id="images-grid" class="images-grid">
+                <!-- Images will be populated by JavaScript -->
+            </div>
+
+            <div class="cta-section">
+                <h2 class="cta-title">Preserve Your Memories Forever</h2>
+                <p class="cta-description">
+                    Transform these digital artworks into beautiful physical prints.
+                    Choose from premium papers, canvas, or traditional Japanese washi paper.
+                </p>
+                <button class="cta-button" onclick="startPrintOrder()">
+                    Order High-Quality Prints
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get gallery ID from URL path
+        function getGalleryId() {
+            const pathParts = window.location.pathname.split('/');
+            return pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2];
+        }
+
+        // Format time remaining
+        function formatTimeRemaining(milliseconds) {
+            const days = Math.floor(milliseconds / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((milliseconds % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+            if (days > 0) {
+                return `${days} day${days !== 1 ? 's' : ''}`;
+            } else if (hours > 0) {
+                return `${hours} hour${hours !== 1 ? 's' : ''}`;
+            } else {
+                return 'less than 1 hour';
+            }
+        }
+
+        // Polling interval for live updates
+        let pollingInterval = null;
+        let isPolling = false;
+
+        // Load gallery data with live updates
+        async function loadGallery() {
+            const galleryId = getGalleryId();
+
+            if (!galleryId) {
+                showError('Invalid gallery URL');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/gallery?id=${galleryId}`);
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.message);
+                }
+
+                displayGallery(data.gallery);
+
+                // Start polling if gallery is still generating
+                if (data.gallery.status === 'generating' && !isPolling) {
+                    startPolling();
+                }
+
+            } catch (error) {
+                console.error('Failed to load gallery:', error);
+                showError(error.message);
+            }
+        }
+
+        // Start polling for updates
+        function startPolling() {
+            if (isPolling) return;
+
+            isPolling = true;
+            console.log('🔄 Starting live gallery updates...');
+
+            pollingInterval = setInterval(async () => {
+                try {
+                    const galleryId = getGalleryId();
+                    const response = await fetch(`/api/gallery?id=${galleryId}`);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        updateGalleryProgress(data.gallery);
+
+                        // Stop polling when complete
+                        if (data.gallery.status === 'complete' || data.gallery.status === 'partial') {
+                            stopPolling();
+                        }
+                    }
+                } catch (error) {
+                    console.error('Polling error:', error);
+                }
+            }, 3000); // Poll every 3 seconds
+        }
+
+        // Stop polling
+        function stopPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                isPolling = false;
+                console.log('✅ Gallery updates complete');
+            }
+        }
+
+        // Display gallery content with progressive loading support
+        function displayGallery(gallery) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('gallery-content').style.display = 'block';
+
+            // Update time remaining
+            const timeRemaining = formatTimeRemaining(gallery.timeRemaining);
+            document.getElementById('time-remaining').textContent = timeRemaining;
+
+            // Populate memory details
+            const memoryDetails = document.getElementById('memory-details');
+            const { userInputs } = gallery;
+
+            memoryDetails.innerHTML = `
+                <div class="memory-location">${userInputs.location}, Japan</div>
+                <div class="memory-focus">${userInputs.focus}</div>
+                <div class="memory-detail">${userInputs.detail}</div>
+                <div class="memory-tags">
+                    <span class="memory-tag">${userInputs.atmosphere}</span>
+                    ${userInputs.feelings.map(feeling => `<span class="memory-tag">${feeling}</span>`).join('')}
+                </div>
+            `;
+
+            // Update progress indicator based on status
+            updateProgressIndicator(gallery);
+
+            // Populate images grid
+            updateImagesGrid(gallery);
+        }
+
+        // Update progress indicator
+        function updateProgressIndicator(gallery) {
+            const progressSection = document.getElementById('progress-section') || createProgressSection();
+
+            if (gallery.status === 'generating') {
+                const { completed, total, generating } = gallery.progress;
+                progressSection.innerHTML = `
+                    <div class="progress-header">
+                        <h3>Creating Your Omoide Art...</h3>
+                        <p>Transforming your memories into beautiful shin-hanga artwork</p>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${(completed / total) * 100}%"></div>
+                    </div>
+                    <div class="progress-text">
+                        ${completed} of ${total} artworks completed
+                        ${generating > 0 ? ` • ${generating} currently generating` : ''}
+                    </div>
+                `;
+                progressSection.style.display = 'block';
+            } else if (gallery.status === 'partial') {
+                const { completed, total, failed } = gallery.progress;
+                progressSection.innerHTML = `
+                    <div class="progress-header">
+                        <h3>Gallery Partially Complete</h3>
+                        <p>${completed} of ${total} artworks successfully created</p>
+                    </div>
+                    <div class="progress-text">
+                        ${failed} artwork${failed !== 1 ? 's' : ''} could not be generated due to technical issues
+                    </div>
+                `;
+                progressSection.style.display = 'block';
+            } else {
+                progressSection.style.display = 'none';
+            }
+        }
+
+        // Create progress section if it doesn't exist
+        function createProgressSection() {
+            const progressSection = document.createElement('div');
+            progressSection.id = 'progress-section';
+            progressSection.className = 'progress-section';
+
+            const memoryDetails = document.getElementById('memory-details');
+            memoryDetails.parentNode.insertBefore(progressSection, memoryDetails.nextSibling);
+
+            return progressSection;
+        }
+
+        // Update images grid with placeholders and completed images
+        function updateImagesGrid(gallery) {
+            const imagesGrid = document.getElementById('images-grid');
+
+            imagesGrid.innerHTML = gallery.images.map((image, index) => {
+                if (image.status === 'completed' && image.webUrl) {
+                    return `
+                        <div class="image-card completed" data-index="${image.index}">
+                            <div class="image-container">
+                                <img src="${image.webUrl}" alt="Omoide Art ${image.index}" class="gallery-image" loading="lazy">
+                                <div class="image-overlay">
+                                    <button class="view-fullsize" onclick="viewFullsize('${image.webUrl}')">
+                                        View Full Size
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="image-info">
+                                <div class="image-number">Artwork ${image.index}</div>
+                                <div class="image-status">✅ Complete</div>
+                            </div>
+                        </div>
+                    `;
+                } else if (image.status === 'generating') {
+                    return `
+                        <div class="image-card generating" data-index="${image.index}">
+                            <div class="image-container">
+                                <div class="generating-placeholder">
+                                    <div class="loading-spinner"></div>
+                                    <p>Creating artwork...</p>
+                                </div>
+                            </div>
+                            <div class="image-info">
+                                <div class="image-number">Artwork ${image.index}</div>
+                                <div class="image-status">🎨 Generating</div>
+                            </div>
+                        </div>
+                    `;
+                } else if (image.status === 'failed') {
+                    return `
+                        <div class="image-card failed" data-index="${image.index}">
+                            <div class="image-container">
+                                <div class="error-placeholder">
+                                    <p>❌ Generation failed</p>
+                                    <button class="retry-button" onclick="retryImage(${image.index})">
+                                        Retry
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="image-info">
+                                <div class="image-number">Artwork ${image.index}</div>
+                                <div class="image-status">Failed</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="image-card pending" data-index="${image.index}">
+                            <div class="image-container">
+                                <div class="pending-placeholder">
+                                    <p>⏳ In queue</p>
+                                </div>
+                            </div>
+                            <div class="image-info">
+                                <div class="image-number">Artwork ${image.index}</div>
+                                <div class="image-status">Pending</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        // Update gallery progress (called by polling)
+        function updateGalleryProgress(gallery) {
+            console.log(`🔄 Gallery update: ${gallery.progress.completed}/4 completed`);
+
+            updateProgressIndicator(gallery);
+            updateImagesGrid(gallery);
+
+            // Animate new completed images
+            gallery.images.forEach(image => {
+                if (image.status === 'completed') {
+                    const card = document.querySelector(`[data-index="${image.index}"]`);
+                    if (card && !card.classList.contains('completed')) {
+                        card.classList.add('newly-completed');
+                        setTimeout(() => card.classList.remove('newly-completed'), 1000);
+                    }
+                }
+            });
+        }
+
+        // Show error state
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            if (message) {
+                document.querySelector('.error p').textContent = message;
+            }
+        }
+
+        // View fullsize image
+        function viewFullsize(imageUrl) {
+            window.open(imageUrl, '_blank');
+        }
+
+        // Start print order process
+        async function startPrintOrder() {
+            try {
+                // Get available print products
+                const response = await fetch('/api/prodigi-orders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ action: 'get-products' })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showPrintOrderModal(data.products);
+                } else {
+                    throw new Error(data.message || 'Failed to load print products');
+                }
+
+            } catch (error) {
+                console.error('Print order error:', error);
+                alert('Print ordering is temporarily unavailable. Please try again later.');
+            }
+        }
+
+        // Show print order modal (placeholder for now)
+        function showPrintOrderModal(products) {
+            const productList = Object.entries(products)
+                .map(([key, product]) => `• ${product.name} - $${(product.price / 100).toFixed(2)}`)
+                .join('\n');
+
+            alert(`Print products available:\n\n${productList}\n\nFull print ordering interface coming soon! This will include product selection, shipping address, and payment processing.`);
+        }
+
+        // Retry failed image generation
+        async function retryImage(imageIndex) {
+            try {
+                const galleryId = getGalleryId();
+                console.log(`🔄 Retrying image ${imageIndex} for gallery ${galleryId}`);
+
+                // Update UI to show retrying
+                const card = document.querySelector(`[data-index="${imageIndex}"]`);
+                if (card) {
+                    card.innerHTML = `
+                        <div class="image-container">
+                            <div class="generating-placeholder">
+                                <div class="loading-spinner"></div>
+                                <p>Retrying generation...</p>
+                            </div>
+                        </div>
+                        <div class="image-info">
+                            <div class="image-number">Artwork ${imageIndex}</div>
+                            <div class="image-status">🔄 Retrying</div>
+                        </div>
+                    `;
+                    card.className = 'image-card generating';
+                }
+
+                // Trigger retry webhook
+                const response = await fetch('/api/webhook-generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Webhook-Secret': 'webhook-secret-key'
+                    },
+                    body: JSON.stringify({
+                        galleryId,
+                        imageIndex,
+                        enhancedPrompt: 'Retry generation',
+                        aspectRatio: '1:1'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Retry request failed');
+                }
+
+                // Resume polling to track progress
+                if (!isPolling) {
+                    startPolling();
+                }
+
+            } catch (error) {
+                console.error('Retry failed:', error);
+                alert('Unable to retry image generation. Please refresh the page and try again.');
+            }
+        }
+
+        // Initialize gallery on page load
+        document.addEventListener('DOMContentLoaded', loadGallery);
+    </script>
+</body>
+</html>
