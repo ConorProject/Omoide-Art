@@ -21,89 +21,71 @@ function aspectRatioToSize(aspectRatio) {
   return sizeMap[aspectRatio] || "4096*4096";
 }
 
-async function generateImageSync(prompt, aspectRatio = '1:1') {
-  try {
-    console.log('🚀 Generating image synchronously...');
-
-    const url = "https://api.wavespeed.ai/api/v3/bytedance/seedream-v4/sequential";
-    const headers = {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${process.env.WAVESPEED_API_KEY}`
-    };
-
-    const payload = {
-      "prompt": prompt,
-      "size": aspectRatioToSize(aspectRatio),
-      "max_images": 1,
-      "enable_base64_output": false,
-      "enable_sync_mode": true
-    };
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: headers,
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      throw new Error(`API Error ${response.status}: ${await response.text()}`);
-    }
-
-    const result = await response.json();
-
-    if (!result.data || !result.data.outputs || !result.data.outputs[0]) {
-      throw new Error('No image URL returned from API');
-    }
-
-    const imageUrl = result.data.outputs[0];
-    console.log(`✅ Image generated: ${imageUrl}`);
-    return imageUrl;
-
-  } catch (error) {
-    console.error(`❌ Image generation failed: ${error.message}`);
-    throw error;
-  }
-}
 
 async function triggerWebhookGeneration(galleryId, userInputs, baseUrl) {
   try {
-    console.log('🚀 Generating images synchronously...');
+    console.log('🚀 Triggering webhook generation for gallery:', galleryId);
 
     const finalPrompt = constructArtisticPrompt(userInputs);
+    const webhookUrl = `${baseUrl}/api/webhook-simple`;
+    const webhookSecret = process.env.WEBHOOK_SECRET || 'webhook-secret-key';
 
-    // Generate images synchronously (parallel processing)
+    // Trigger webhooks for each image (parallel processing)
     const imagePromises = Array.from({ length: 4 }, async (_, index) => {
       try {
-        const imageUrl = await generateImageSync(finalPrompt, userInputs.aspectRatio || '1:1');
-        console.log(`✅ Image ${index + 1} generated successfully: ${imageUrl}`);
+        console.log(`🔗 Calling webhook for image ${index + 1}...`);
+
+        const webhookPayload = {
+          galleryId,
+          imageIndex: index + 1,
+          enhancedPrompt: finalPrompt,
+          aspectRatio: userInputs.aspectRatio || '1:1'
+        };
+
+        const response = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Webhook-Secret': webhookSecret
+          },
+          body: JSON.stringify(webhookPayload)
+        });
+
+        if (!response.ok) {
+          throw new Error(`Webhook failed: ${response.status} ${await response.text()}`);
+        }
+
+        const result = await response.json();
+        console.log(`✅ Webhook ${index + 1} completed: ${result.imageUrl}`);
+
         return {
           success: true,
           galleryId,
           imageIndex: index + 1,
-          imageUrl: imageUrl,
-          message: `Image ${index + 1} generated successfully`
+          imageUrl: result.imageUrl,
+          message: `Image ${index + 1} generated successfully via webhook`
         };
       } catch (error) {
-        console.error(`❌ Failed to generate image ${index + 1}:`, error);
+        console.error(`❌ Webhook failed for image ${index + 1}:`, error);
         return {
           success: false,
           galleryId,
           imageIndex: index + 1,
           error: error.message,
-          message: `Image ${index + 1} generation failed`
+          message: `Image ${index + 1} webhook failed`
         };
       }
     });
 
-    // Wait for all images to be generated
+    // Wait for all webhooks to complete
     const results = await Promise.all(imagePromises);
     const successful = results.filter(r => r.success).length;
-    console.log(`✅ Successfully generated ${successful}/4 images`);
+    console.log(`✅ Successfully triggered ${successful}/4 webhook generations`);
 
     return results;
 
   } catch (error) {
-    console.error('❌ Failed to generate images:', error);
+    console.error('❌ Failed to trigger webhook generation:', error);
     throw error;
   }
 }
