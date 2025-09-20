@@ -100,9 +100,11 @@ async function triggerWebhookGeneration(galleryId, userInputs, baseUrl) {
     const successful = results.filter(r => r.success).length;
     console.log(`✅ Successfully generated ${successful}/4 images`);
 
+    return results;
+
   } catch (error) {
     console.error('❌ Failed to generate images:', error);
-    // Don't throw - we still want to return the gallery link
+    throw error;
   }
 }
 
