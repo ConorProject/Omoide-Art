@@ -115,6 +115,11 @@ module.exports = async function handler(req, res) {
       };
     }
 
+    // Ensure userInputs are always present (for backwards compatibility with old galleries)
+    if (!galleryData.userInputs) {
+      galleryData.userInputs = userInputs;
+    }
+
     return res.status(200).json({
       success: true,
       gallery: {
