@@ -78,24 +78,28 @@ module.exports = async function handler(req, res) {
           {
             index: 1,
             status: 'completed',
+            requestId: '2943fd74e17d4cac86b9d303de5e3150',
             webUrl: 'https://d1q70pf5vjeyhc.cloudfront.net/predictions/2943fd74e17d4cac86b9d303de5e3150/1.jpeg',
             printUrl: 'https://d1q70pf5vjeyhc.cloudfront.net/predictions/2943fd74e17d4cac86b9d303de5e3150/1.jpeg'
           },
           {
             index: 2,
             status: 'completed',
+            requestId: 'd95725cb8aa047e8981ec6faf0f977ed',
             webUrl: 'https://d1q70pf5vjeyhc.cloudfront.net/predictions/d95725cb8aa047e8981ec6faf0f977ed/1.jpeg',
             printUrl: 'https://d1q70pf5vjeyhc.cloudfront.net/predictions/d95725cb8aa047e8981ec6faf0f977ed/1.jpeg'
           },
           {
             index: 3,
             status: 'completed',
+            requestId: '40ac836401b84a4581c46fe464d31e3f',
             webUrl: 'https://d1q70pf5vjeyhc.cloudfront.net/predictions/40ac836401b84a4581c46fe464d31e3f/1.jpeg',
             printUrl: 'https://d1q70pf5vjeyhc.cloudfront.net/predictions/40ac836401b84a4581c46fe464d31e3f/1.jpeg'
           },
           {
             index: 4,
             status: 'completed',
+            requestId: '111bfcfdbf274a5192913b273de2f55c',
             webUrl: 'https://d1q70pf5vjeyhc.cloudfront.net/predictions/111bfcfdbf274a5192913b273de2f55c/1.jpeg',
             printUrl: 'https://d1q70pf5vjeyhc.cloudfront.net/predictions/111bfcfdbf274a5192913b273de2f55c/1.jpeg'
           }
