@@ -12,72 +12,96 @@ function constructArtisticPrompt({ location, atmosphere, focus, detail, feelings
   return `A delicate and precise Japanese shin-hanga woodblock print in the style of Kawase Hasui. The view from ${location}, Japan, ${atmosphereMap[atmosphere] || atmosphere}. The composition focuses sharply on ${focus}, where ${detail} creates an atmospheric focal point rendered with fine linework and layered color washes. Masterful execution featuring precise bokashi color gradations, visible washi paper texture, and subtle wood grain from the printing block. Fine architectural details, delicate brushwork textures, and soft blended shadows suggesting gentle natural light. The color palette uses traditional mineral pigments in ${feelingPhrase} harmony. Highlights achieved through strategic use of untouched paper areas. The overall composition is elegant and asymmetrical, capturing the delicate touch and quiet beauty characteristic of the finest shin-hanga masters of the early 20th century.`;
 }
 
+function aspectRatioToSize(aspectRatio) {
+  const sizeMap = {
+    "1:1": "4096*4096",
+    "3:4": "3072*4096",
+    "4:3": "4096*3072"
+  };
+  return sizeMap[aspectRatio] || "4096*4096";
+}
+
+async function generateImageSync(prompt, aspectRatio = '1:1') {
+  try {
+    console.log('🚀 Generating image synchronously...');
+
+    const url = "https://api.wavespeed.ai/api/v3/bytedance/seedream-v4/sequential";
+    const headers = {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${process.env.WAVESPEED_API_KEY}`
+    };
+
+    const payload = {
+      "prompt": prompt,
+      "size": aspectRatioToSize(aspectRatio),
+      "max_images": 1,
+      "enable_base64_output": false,
+      "enable_sync_mode": true
+    };
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error ${response.status}: ${await response.text()}`);
+    }
+
+    const result = await response.json();
+
+    if (!result.data || !result.data.outputs || !result.data.outputs[0]) {
+      throw new Error('No image URL returned from API');
+    }
+
+    const imageUrl = result.data.outputs[0];
+    console.log(`✅ Image generated: ${imageUrl}`);
+    return imageUrl;
+
+  } catch (error) {
+    console.error(`❌ Image generation failed: ${error.message}`);
+    throw error;
+  }
+}
+
 async function triggerWebhookGeneration(galleryId, userInputs, baseUrl) {
   try {
-    console.log('🚀 Triggering webhook generation...');
+    console.log('🚀 Generating images synchronously...');
 
     const finalPrompt = constructArtisticPrompt(userInputs);
 
-    // Trigger webhook for each image (parallel processing)
-    const webhookPromises = Array.from({ length: 4 }, (_, index) => {
-      const webhookUrl = `${baseUrl}/api/webhook-simple`;
-
-      return fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Webhook-Secret': process.env.WEBHOOK_SECRET || 'webhook-secret-key'
-        },
-        body: JSON.stringify({
+    // Generate images synchronously (parallel processing)
+    const imagePromises = Array.from({ length: 4 }, async (_, index) => {
+      try {
+        const imageUrl = await generateImageSync(finalPrompt, userInputs.aspectRatio || '1:1');
+        console.log(`✅ Image ${index + 1} generated successfully: ${imageUrl}`);
+        return {
+          success: true,
           galleryId,
           imageIndex: index + 1,
-          enhancedPrompt: finalPrompt,
-          aspectRatio: userInputs.aspectRatio || '1:1',
-          userInputs
-        })
-      }).then(async response => {
-        if (response.ok) {
-          const result = await response.json();
-
-          // Update gallery with the request ID
-          if (result.success && result.requestId) {
-            console.log(`📝 Updating gallery ${galleryId} - Image ${index + 1} with requestId: ${result.requestId}`);
-
-            try {
-              await fetch(`${baseUrl}/api/update-gallery`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                  galleryId,
-                  imageIndex: index + 1,
-                  requestId: result.requestId,
-                  status: 'generating'
-                })
-              });
-            } catch (updateError) {
-              console.error(`❌ Failed to update gallery for image ${index + 1}:`, updateError);
-            }
-          }
-
-          return result;
-        } else {
-          throw new Error(`Webhook failed with status ${response.status}`);
-        }
-      }).catch(error => {
-        console.error(`❌ Failed to trigger webhook for image ${index + 1}:`, error);
-        return null; // Return null to indicate failure
-      });
+          imageUrl: imageUrl,
+          message: `Image ${index + 1} generated successfully`
+        };
+      } catch (error) {
+        console.error(`❌ Failed to generate image ${index + 1}:`, error);
+        return {
+          success: false,
+          galleryId,
+          imageIndex: index + 1,
+          error: error.message,
+          message: `Image ${index + 1} generation failed`
+        };
+      }
     });
 
-    // Wait for all webhook requests to be sent
-    const results = await Promise.all(webhookPromises);
-    const successful = results.filter(r => r !== null).length;
-    console.log(`✅ Successfully triggered ${successful}/4 webhooks`);
+    // Wait for all images to be generated
+    const results = await Promise.all(imagePromises);
+    const successful = results.filter(r => r.success).length;
+    console.log(`✅ Successfully generated ${successful}/4 images`);
 
   } catch (error) {
-    console.error('❌ Failed to trigger webhook generation:', error);
+    console.error('❌ Failed to generate images:', error);
     // Don't throw - we still want to return the gallery link
   }
 }
