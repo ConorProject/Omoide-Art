@@ -82,6 +82,76 @@ module.exports = async function handler(req, res) {
     console.log(`✅ Webhook completed for image ${imageIndex} in gallery ${galleryId}`);
     console.log(`🖼️ Image URL: ${imageUrl}`);
 
+    // Update gallery metadata in blob storage
+    try {
+      const { put, list } = require('@vercel/blob');
+
+      // Try to fetch existing metadata
+      let galleryData;
+      try {
+        const { blobs } = await list({
+          prefix: `galleries/${galleryId}/metadata.json`,
+          limit: 1
+        });
+
+        if (blobs.length > 0) {
+          const metadataResponse = await fetch(blobs[0].url);
+          galleryData = await metadataResponse.json();
+        }
+      } catch (error) {
+        console.log('📝 No existing metadata found, creating new gallery data');
+      }
+
+      // Create or update gallery data
+      if (!galleryData) {
+        galleryData = {
+          id: galleryId,
+          status: 'generating',
+          progress: { completed: 0, total: 4, failed: 0 },
+          createdAt: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          images: [
+            { index: 1, status: 'pending', requestId: null },
+            { index: 2, status: 'pending', requestId: null },
+            { index: 3, status: 'pending', requestId: null },
+            { index: 4, status: 'pending', requestId: null }
+          ],
+          purchased: false,
+          viewCount: 0
+        };
+      }
+
+      // Update the specific image
+      const imageObj = galleryData.images.find(img => img.index === imageIndex);
+      if (imageObj) {
+        imageObj.status = 'completed';
+        imageObj.webUrl = imageUrl;
+        imageObj.printUrl = imageUrl;
+        imageObj.requestId = imageUrl.split('/').slice(-2, -1)[0]; // Extract ID from URL
+      }
+
+      // Update progress
+      const completedCount = galleryData.images.filter(img => img.status === 'completed').length;
+      galleryData.progress.completed = completedCount;
+
+      // Update gallery status
+      if (completedCount === 4) {
+        galleryData.status = 'complete';
+      }
+
+      // Store updated metadata
+      await put(`galleries/${galleryId}/metadata.json`, JSON.stringify(galleryData), {
+        access: 'public',
+        addRandomSuffix: false,
+        allowOverwrite: true
+      });
+
+      console.log(`📝 Updated gallery metadata: ${completedCount}/4 images completed`);
+    } catch (storageError) {
+      console.error('❌ Failed to update gallery metadata:', storageError);
+      // Don't fail the webhook if storage fails
+    }
+
     return res.status(200).json({
       success: true,
       galleryId,
