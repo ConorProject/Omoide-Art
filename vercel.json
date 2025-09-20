@@ -6,7 +6,7 @@
     "api/webhook-generate.js": {
       "maxDuration": 300
     },
-    "api/gallery-update.js": {
+    "api/update-gallery.js": {
       "maxDuration": 30
     },
     "api/gallery.js": {
