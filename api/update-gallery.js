@@ -38,12 +38,35 @@ module.exports = async function handler(req, res) {
 
       // Create default structure if no existing metadata
       if (!galleryData) {
+        // Decode userInputs from galleryId
+        let userInputs = {
+          location: 'Tokyo',
+          atmosphere: 'golden',
+          focus: 'cherry blossoms',
+          detail: 'pink petals falling',
+          feelings: ['peaceful', 'nostalgic'],
+          aspectRatio: '1:1',
+          season: 'spring'
+        };
+
+        try {
+          const parts = galleryId.split('_');
+          if (parts.length >= 2) {
+            const encodedInputs = parts.slice(1).join('_');
+            const decodedInputs = JSON.parse(Buffer.from(encodedInputs, 'base64').toString());
+            userInputs = decodedInputs;
+          }
+        } catch (error) {
+          console.log('⚠️ Failed to decode user inputs in update-gallery, using defaults:', error.message);
+        }
+
         galleryData = {
           id: galleryId,
           status: 'generating',
           progress: { completed: 0, total: 4, failed: 0 },
           createdAt: new Date().toISOString(),
           expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          userInputs: userInputs,
           images: [
             { index: 1, status: 'pending', requestId: null },
             { index: 2, status: 'pending', requestId: null },
