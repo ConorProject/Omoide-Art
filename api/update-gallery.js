@@ -4,28 +4,97 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { galleryId, imageIndex, requestId, status } = req.body;
+    const { galleryId, imageIndex, requestId, status, webUrl, printUrl } = req.body;
 
-    if (!galleryId || !imageIndex || !requestId) {
+    if (!galleryId || !imageIndex) {
       return res.status(400).json({
         success: false,
-        message: 'Gallery ID, image index, and request ID are required'
+        message: 'Gallery ID and image index are required'
       });
     }
 
-    console.log(`📝 Updating gallery ${galleryId} - Image ${imageIndex} with requestId: ${requestId}`);
+    console.log(`📝 Updating gallery ${galleryId} - Image ${imageIndex} with requestId: ${requestId}, status: ${status}`);
 
-    // For now, we'll store this information in memory or a simple store
-    // In a real production system, this would update a database
+    try {
+      const { put, list } = require('@vercel/blob');
 
-    // This is a simplified implementation - in production you'd want to:
-    // 1. Load existing gallery metadata from blob storage
-    // 2. Update the specific image's requestId and status
-    // 3. Save the updated metadata back to blob storage
+      // Try to load existing metadata
+      let galleryData = null;
+      try {
+        const { blobs } = await list({
+          prefix: `galleries/${galleryId}/metadata.json`,
+          limit: 1
+        });
+
+        if (blobs.length > 0) {
+          const metadataResponse = await fetch(blobs[0].url);
+          if (metadataResponse.ok) {
+            galleryData = await metadataResponse.json();
+          }
+        }
+      } catch (error) {
+        console.log('No existing metadata found, creating new structure');
+      }
+
+      // Create default structure if no existing metadata
+      if (!galleryData) {
+        galleryData = {
+          id: galleryId,
+          status: 'generating',
+          progress: { completed: 0, total: 4, failed: 0 },
+          createdAt: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          images: [
+            { index: 1, status: 'pending', requestId: null },
+            { index: 2, status: 'pending', requestId: null },
+            { index: 3, status: 'pending', requestId: null },
+            { index: 4, status: 'pending', requestId: null }
+          ],
+          purchased: false,
+          viewCount: 1
+        };
+      }
+
+      // Update the specific image
+      const imageIdx = galleryData.images.findIndex(img => img.index === imageIndex);
+      if (imageIdx !== -1) {
+        if (requestId) galleryData.images[imageIdx].requestId = requestId;
+        if (status) galleryData.images[imageIdx].status = status;
+        if (webUrl) galleryData.images[imageIdx].webUrl = webUrl;
+        if (printUrl) galleryData.images[imageIdx].printUrl = printUrl;
+
+        console.log(`✅ Updated image ${imageIndex}: ${JSON.stringify(galleryData.images[imageIdx])}`);
+      }
+
+      // Update gallery progress
+      const completed = galleryData.images.filter(img => img.status === 'completed').length;
+      const failed = galleryData.images.filter(img => img.status === 'failed').length;
+      const generating = galleryData.images.filter(img => img.status === 'generating').length;
+
+      galleryData.progress = { completed, total: 4, failed, generating };
+
+      if (completed === 4) {
+        galleryData.status = 'complete';
+      } else if (completed + failed === 4) {
+        galleryData.status = 'partial';
+      } else {
+        galleryData.status = 'generating';
+      }
+
+      // Save updated metadata
+      await put(`galleries/${galleryId}/metadata.json`, JSON.stringify(galleryData, null, 2), {
+        access: 'public'
+      });
+
+      console.log(`✅ Gallery metadata saved for ${galleryId}`);
+
+    } catch (blobError) {
+      console.error('Blob storage error, continuing without persistence:', blobError.message);
+    }
 
     return res.status(200).json({
       success: true,
-      message: `Gallery ${galleryId} updated - Image ${imageIndex} now tracking requestId: ${requestId}`
+      message: `Gallery ${galleryId} updated - Image ${imageIndex} updated successfully`
     });
 
   } catch (error) {

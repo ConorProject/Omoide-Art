@@ -591,8 +591,8 @@
         // Extract image URL from Wavespeed response
         function extractImageUrl(data) {
             // Handle different response formats from Wavespeed API
-            if (data.outputs && data.outputs[0] && data.outputs[0].url) {
-                return data.outputs[0].url;
+            if (data.outputs && data.outputs[0]) {
+                return data.outputs[0]; // Wavespeed returns direct URLs in outputs array
             }
             if (data.output && data.output.url) {
                 return data.output.url;

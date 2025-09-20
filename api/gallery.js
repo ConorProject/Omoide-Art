@@ -15,7 +15,7 @@ module.exports = async function handler(req, res) {
 
     console.log(`🖼️ Fetching gallery: ${id}`);
 
-    // Decode user inputs from gallery ID
+    // Decode user inputs from gallery ID - MUST be declared outside try block
     let userInputs = {
       location: 'Tokyo',
       atmosphere: 'golden',
