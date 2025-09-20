@@ -3,8 +3,8 @@
     "api/generate.js": {
       "maxDuration": 30
     },
-    "api/webhook-generate.js": {
-      "maxDuration": 300
+    "api/webhook-simple.js": {
+      "maxDuration": 30
     },
     "api/update-gallery.js": {
       "maxDuration": 30
