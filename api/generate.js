@@ -22,47 +22,41 @@ function aspectRatioToSize(aspectRatio) {
 }
 
 
-async function generateImagesSync(prompt, aspectRatio = '1:1') {
+async function triggerWebhookGeneration(galleryId, userInputs, baseUrl) {
   try {
-    console.log('🚀 Generating 4 images synchronously...');
+    console.log('🚀 Triggering webhook generation for gallery:', galleryId);
 
-    const url = "https://api.wavespeed.ai/api/v3/bytedance/seedream-v4/sequential";
-    const headers = {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${process.env.WAVESPEED_API_KEY}`
+    const finalPrompt = constructArtisticPrompt(userInputs);
+    const webhookUrl = `${baseUrl}/api/webhook-simple`;
+    const webhookSecret = process.env.WEBHOOK_SECRET || 'webhook-secret-key';
+
+    console.log(`🔗 Calling webhook: ${webhookUrl}`);
+
+    const webhookPayload = {
+      galleryId,
+      enhancedPrompt: finalPrompt,
+      aspectRatio: userInputs.aspectRatio || '1:1'
     };
 
-    const payload = {
-      "prompt": prompt,
-      "size": aspectRatioToSize(aspectRatio),
-      "max_images": 4,
-      "enable_base64_output": false,
-      "enable_sync_mode": true
-    };
-
-    const response = await fetch(url, {
+    const response = await fetch(webhookUrl, {
       method: 'POST',
-      headers: headers,
-      body: JSON.stringify(payload)
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Webhook-Secret': webhookSecret
+      },
+      body: JSON.stringify(webhookPayload)
     });
 
     if (!response.ok) {
-      throw new Error(`API Error ${response.status}: ${await response.text()}`);
+      console.error(`❌ Webhook failed: ${response.status} ${await response.text()}`);
+      // Don't throw - let the gallery be created in "generating" state
+    } else {
+      console.log(`✅ Webhook triggered successfully`);
     }
-
-    const result = await response.json();
-
-    if (!result.data || !result.data.outputs || result.data.outputs.length !== 4) {
-      throw new Error(`Expected 4 image URLs, got ${result.data?.outputs?.length || 0}`);
-    }
-
-    const imageUrls = result.data.outputs;
-    console.log(`✅ All 4 images generated: ${imageUrls.join(', ')}`);
-    return imageUrls;
 
   } catch (error) {
-    console.error(`❌ Image generation failed: ${error.message}`);
-    throw error;
+    console.error('❌ Failed to trigger webhook generation:', error);
+    // Don't throw - let the gallery be created in "generating" state
   }
 }
 
@@ -86,35 +80,27 @@ module.exports = async function handler(req, res) {
     const randomId = Math.random().toString(36).substring(2, 10);
     const galleryId = `${randomId}_${encodedInputs}`;
 
-    // Get host for Magic Link
+    // Get base URL for webhook
+    const protocol = req.headers['x-forwarded-proto'] || 'https';
     const host = req.headers.host;
+    const baseUrl = `${protocol}://${host}`;
 
-    // Generate images directly
-    const finalPrompt = constructArtisticPrompt(userInputs);
-    console.log(`🎨 Generating 4 images for gallery: ${galleryId}`);
-
-    // Generate all 4 images synchronously
-    const imageUrls = await generateImagesSync(finalPrompt, userInputs.aspectRatio);
-
-    console.log(`✅ All 4 images generated: ${imageUrls.join(', ')}`);
-
-    // Create gallery metadata in blob storage
+    // Create initial gallery metadata in blob storage
     try {
       const { put } = require('@vercel/blob');
 
       const galleryData = {
         id: galleryId,
-        status: 'complete',
-        progress: { completed: 4, total: 4, failed: 0 },
+        status: 'generating',
+        progress: { completed: 0, total: 4, failed: 0 },
         createdAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        images: imageUrls.map((imageUrl, index) => ({
-          index: index + 1,
-          status: 'completed',
-          webUrl: imageUrl,
-          printUrl: imageUrl,
-          requestId: imageUrl.split('/').slice(-2, -1)[0]
-        })),
+        images: [
+          { index: 1, status: 'pending', requestId: null },
+          { index: 2, status: 'pending', requestId: null },
+          { index: 3, status: 'pending', requestId: null },
+          { index: 4, status: 'pending', requestId: null }
+        ],
         purchased: false,
         viewCount: 0
       };
@@ -125,11 +111,14 @@ module.exports = async function handler(req, res) {
         allowOverwrite: true
       });
 
-      console.log(`📝 Created gallery metadata: 4/4 images completed`);
+      console.log(`📝 Created initial gallery metadata`);
     } catch (storageError) {
       console.error('❌ Failed to create gallery metadata:', storageError);
       // Don't fail the entire request if storage fails
     }
+
+    // Trigger async image generation via webhook (don't wait for it)
+    triggerWebhookGeneration(galleryId, userInputs, baseUrl);
 
     const magicLink = `${host}/gallery/${galleryId}`;
 
@@ -139,10 +128,9 @@ module.exports = async function handler(req, res) {
       success: true,
       galleryId: galleryId,
       magicLink: magicLink,
-      status: 'complete',
-      imageUrls: imageUrls,
+      status: 'generating',
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      message: 'Your Omoide Art gallery has been created! All 4 images are ready.'
+      message: 'Your Omoide Art gallery is being created! Images will appear shortly.'
     });
 
   } catch (error) {
