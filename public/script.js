@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize roll tracking system on page load
     initializeRollTracking();
 
+    // Check for pre-populated form data from URL parameters
+    checkForPrefilledData();
+
     // Add submit event listener to the form
     form.addEventListener('submit', async function(event) {
         // Prevent the default form submission behavior (page reload)
@@ -809,6 +812,189 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.warn('Error saving gallery to localStorage:', error);
         }
+    }
+
+    /**
+     * Check for pre-populated form data from URL parameters
+     * This allows users to return to a pre-filled form when clicking "Create Another Memory"
+     */
+    function checkForPrefilledData() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const isPrefilled = urlParams.get('prefilled') === 'true';
+
+        if (!isPrefilled) {
+            return; // No pre-filled data
+        }
+
+        console.log('🔄 Detected pre-filled form data from URL parameters');
+
+        // Pre-populate text fields
+        const location = urlParams.get('location');
+        const focus = urlParams.get('focus');
+        const detail = urlParams.get('detail');
+
+        if (location) {
+            document.getElementById('location').value = location;
+        }
+        if (focus) {
+            document.getElementById('focus').value = focus;
+        }
+        if (detail) {
+            document.getElementById('detail').value = detail;
+        }
+
+        // Pre-select atmosphere button
+        const atmosphere = urlParams.get('atmosphere');
+        if (atmosphere) {
+            const atmosphereButton = document.querySelector(`[data-value="${atmosphere}"]`);
+            if (atmosphereButton && atmosphereButton.classList.contains('style-button')) {
+                // Clear existing selections
+                document.querySelectorAll('.style-button').forEach(btn => btn.classList.remove('active'));
+                // Select the correct button
+                atmosphereButton.classList.add('active');
+            }
+        }
+
+        // Pre-select feeling tags (multiple selection)
+        const feelings = urlParams.getAll('feelings');
+        if (feelings.length > 0) {
+            feelings.forEach(feeling => {
+                const feelingButton = document.querySelector(`[data-value="${feeling}"]`);
+                if (feelingButton && feelingButton.classList.contains('tag-button')) {
+                    feelingButton.classList.add('active');
+                }
+            });
+        }
+
+        // Pre-select aspect ratio
+        const aspectRatio = urlParams.get('aspectRatio');
+        if (aspectRatio) {
+            const aspectRatioButton = document.querySelector(`[data-ar="${aspectRatio}"]`);
+            if (aspectRatioButton) {
+                // Clear existing selections
+                document.querySelectorAll('.ar-btn').forEach(btn => btn.classList.remove('selected'));
+                // Select the correct button
+                aspectRatioButton.classList.add('selected');
+            }
+        }
+
+        // Pre-select season
+        const season = urlParams.get('season');
+        if (season) {
+            const seasonChoice = document.querySelector(`[data-season="${season}"]`);
+            if (seasonChoice) {
+                // Clear existing selections
+                document.querySelectorAll('.season-choice').forEach(choice => choice.classList.remove('selected'));
+                // Select the correct choice
+                seasonChoice.classList.add('selected');
+                // Update hidden input
+                document.getElementById('selected-season').value = season;
+            }
+        }
+
+        // Show Clear Form button and notification
+        showClearFormButton();
+        showNotification('Form pre-filled with your previous inputs. You can modify them and create a new variation!', 'info');
+    }
+
+    /**
+     * Show Clear Form button when pre-filled data is detected
+     */
+    function showClearFormButton() {
+        // Check if clear button already exists
+        let clearButton = document.getElementById('clear-form-btn');
+
+        if (!clearButton) {
+            // Create the clear button
+            clearButton = document.createElement('button');
+            clearButton.id = 'clear-form-btn';
+            clearButton.type = 'button';
+            clearButton.className = 'clear-form-button';
+            clearButton.textContent = 'Clear Form';
+            clearButton.title = 'Clear all pre-filled data and start fresh';
+
+            // Style the button
+            Object.assign(clearButton.style, {
+                background: 'rgba(229, 115, 115, 0.1)',
+                color: '#d32f2f',
+                border: '2px solid #ffcdd2',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                marginLeft: '12px',
+                fontFamily: 'inherit'
+            });
+
+            // Add hover effects
+            clearButton.addEventListener('mouseenter', () => {
+                clearButton.style.background = 'rgba(229, 115, 115, 0.2)';
+                clearButton.style.borderColor = '#ef5350';
+                clearButton.style.transform = 'translateY(-1px)';
+            });
+
+            clearButton.addEventListener('mouseleave', () => {
+                clearButton.style.background = 'rgba(229, 115, 115, 0.1)';
+                clearButton.style.borderColor = '#ffcdd2';
+                clearButton.style.transform = 'translateY(0)';
+            });
+
+            // Add click handler
+            clearButton.addEventListener('click', clearFormData);
+
+            // Insert next to submit button
+            const submitButton = document.querySelector('.submit-button');
+            if (submitButton && submitButton.parentNode) {
+                submitButton.parentNode.insertBefore(clearButton, submitButton.nextSibling);
+            }
+        }
+
+        clearButton.style.display = 'inline-block';
+    }
+
+    /**
+     * Clear all form data and return to fresh state
+     */
+    function clearFormData() {
+        console.log('🧹 Clearing form data');
+
+        // Clear text inputs
+        document.getElementById('location').value = '';
+        document.getElementById('focus').value = '';
+        document.getElementById('detail').value = '';
+
+        // Clear atmosphere selection
+        document.querySelectorAll('.style-button').forEach(btn => btn.classList.remove('active'));
+
+        // Clear feeling selections
+        document.querySelectorAll('.tag-button').forEach(btn => btn.classList.remove('active'));
+
+        // Reset aspect ratio to default (1:1)
+        document.querySelectorAll('.ar-btn').forEach(btn => btn.classList.remove('selected'));
+        const defaultAspectRatio = document.querySelector('[data-ar="1:1"]');
+        if (defaultAspectRatio) {
+            defaultAspectRatio.classList.add('selected');
+        }
+
+        // Clear season selection
+        document.querySelectorAll('.season-choice').forEach(choice => choice.classList.remove('selected'));
+        document.getElementById('selected-season').value = '';
+
+        // Hide clear button
+        const clearButton = document.getElementById('clear-form-btn');
+        if (clearButton) {
+            clearButton.style.display = 'none';
+        }
+
+        // Clear URL parameters (clean state)
+        if (window.location.search) {
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+        }
+
+        showNotification('Form cleared! Ready for a fresh memory.', 'success');
     }
 
 });

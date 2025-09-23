@@ -430,6 +430,94 @@
             opacity: 0.7;
         }
 
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 90vw;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .modal-image {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            align-items: center;
+        }
+
+        .modal-download {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .modal-download:hover {
+            background: #A63D40;
+            transform: translateY(-2px);
+        }
+
+        .modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            background: white;
+            color: var(--text-primary);
+        }
+
+        .close-x {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .close-x:hover {
+            opacity: 0.7;
+        }
+
         @media (max-width: 768px) {
             .gallery-container {
                 padding: 20px 16px;
@@ -450,6 +538,22 @@
 
             .progress-section {
                 padding: 20px;
+            }
+
+            .modal-content {
+                max-width: 95vw;
+                max-height: 95vh;
+            }
+
+            .modal-controls {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .close-x {
+                top: 10px;
+                right: 15px;
+                font-size: 30px;
             }
         }
     </style>
@@ -499,10 +603,26 @@
                     <a href="/collection" class="collection-button">
                         View My Collection
                     </a>
-                    <a href="/" class="new-gallery-button">
+                    <a href="#" id="new-gallery-button" class="new-gallery-button" onclick="createAnotherMemory()">
                         Create Another Memory
                     </a>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div id="imageModal" class="modal">
+        <span class="close-x" onclick="closeModal()">&times;</span>
+        <div class="modal-content">
+            <img id="modalImage" class="modal-image" src="" alt="Full Size Artwork">
+            <div class="modal-controls">
+                <a id="modalDownload" href="" download class="modal-download">
+                    Download Image
+                </a>
+                <button class="modal-close" onclick="closeModal()">
+                    Close
+                </button>
             </div>
         </div>
     </div>
@@ -945,9 +1065,59 @@
             }
         }
 
-        // View fullsize image
+        // View fullsize image in modal
         function viewFullsize(imageUrl) {
-            window.open(imageUrl, '_blank');
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            const modalDownload = document.getElementById('modalDownload');
+
+            modalImage.src = imageUrl;
+            modalDownload.href = imageUrl;
+            modal.style.display = 'block';
+
+            // Close modal when clicking outside the image
+            modal.onclick = function(event) {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            };
+        }
+
+        // Close modal
+        function closeModal() {
+            const modal = document.getElementById('imageModal');
+            modal.style.display = 'none';
+        }
+
+        // Create another memory with pre-populated data
+        function createAnotherMemory() {
+            if (!currentGallery || !currentGallery.userInputs) {
+                window.location.href = '/';
+                return;
+            }
+
+            const { userInputs } = currentGallery;
+            const params = new URLSearchParams();
+
+            // Add all user inputs as URL parameters
+            params.set('location', userInputs.location || '');
+            params.set('atmosphere', userInputs.atmosphere || '');
+            params.set('focus', userInputs.focus || '');
+            params.set('detail', userInputs.detail || '');
+            params.set('aspectRatio', userInputs.aspectRatio || '1:1');
+            params.set('season', userInputs.season || '');
+
+            // Handle feelings array
+            if (userInputs.feelings && Array.isArray(userInputs.feelings)) {
+                userInputs.feelings.forEach(feeling => {
+                    params.append('feelings', feeling);
+                });
+            }
+
+            // Add a flag to indicate this is pre-populated data
+            params.set('prefilled', 'true');
+
+            window.location.href = '/?' + params.toString();
         }
 
         // Start digital download process
