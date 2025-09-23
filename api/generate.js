@@ -24,65 +24,42 @@ function aspectRatioToSize(aspectRatio) {
 
 async function triggerWebhookGeneration(galleryId, userInputs, baseUrl) {
   try {
-    console.log('🚀 Triggering webhook generation for gallery:', galleryId);
+    console.log('🚀 Triggering single webhook generation for gallery:', galleryId);
 
     const finalPrompt = constructArtisticPrompt(userInputs);
     const webhookUrl = `${baseUrl}/api/webhook-simple`;
     const webhookSecret = process.env.WEBHOOK_SECRET || 'webhook-secret-key';
 
-    // Trigger webhooks for each image (parallel processing)
-    const imagePromises = Array.from({ length: 4 }, async (_, index) => {
-      try {
-        console.log(`🔗 Calling webhook for image ${index + 1}...`);
+    console.log(`🔗 Calling webhook for all 4 images...`);
 
-        const webhookPayload = {
-          galleryId,
-          imageIndex: index + 1,
-          enhancedPrompt: finalPrompt,
-          aspectRatio: userInputs.aspectRatio || '1:1'
-        };
+    const webhookPayload = {
+      galleryId,
+      enhancedPrompt: finalPrompt,
+      aspectRatio: userInputs.aspectRatio || '1:1'
+    };
 
-        const response = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Webhook-Secret': webhookSecret
-          },
-          body: JSON.stringify(webhookPayload)
-        });
-
-        if (!response.ok) {
-          throw new Error(`Webhook failed: ${response.status} ${await response.text()}`);
-        }
-
-        const result = await response.json();
-        console.log(`✅ Webhook ${index + 1} completed: ${result.imageUrl}`);
-
-        return {
-          success: true,
-          galleryId,
-          imageIndex: index + 1,
-          imageUrl: result.imageUrl,
-          message: `Image ${index + 1} generated successfully via webhook`
-        };
-      } catch (error) {
-        console.error(`❌ Webhook failed for image ${index + 1}:`, error);
-        return {
-          success: false,
-          galleryId,
-          imageIndex: index + 1,
-          error: error.message,
-          message: `Image ${index + 1} webhook failed`
-        };
-      }
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Webhook-Secret': webhookSecret
+      },
+      body: JSON.stringify(webhookPayload)
     });
 
-    // Wait for all webhooks to complete
-    const results = await Promise.all(imagePromises);
-    const successful = results.filter(r => r.success).length;
-    console.log(`✅ Successfully triggered ${successful}/4 webhook generations`);
+    if (!response.ok) {
+      throw new Error(`Webhook failed: ${response.status} ${await response.text()}`);
+    }
 
-    return results;
+    const result = await response.json();
+    console.log(`✅ Webhook completed: All 4 images generated`);
+
+    return [{
+      success: true,
+      galleryId,
+      imageUrls: result.imageUrls,
+      message: 'All 4 images generated successfully via single webhook'
+    }];
 
   } catch (error) {
     console.error('❌ Failed to trigger webhook generation:', error);

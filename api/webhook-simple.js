@@ -7,9 +7,9 @@ function aspectRatioToSize(aspectRatio) {
   return sizeMap[aspectRatio] || "4096*4096";
 }
 
-async function generateImageSync(prompt, aspectRatio = '1:1') {
+async function generateImagesSync(prompt, aspectRatio = '1:1') {
   try {
-    console.log('🚀 Generating image synchronously...');
+    console.log('🚀 Generating 4 images synchronously...');
 
     const url = "https://api.wavespeed.ai/api/v3/bytedance/seedream-v4/sequential";
     const headers = {
@@ -20,7 +20,7 @@ async function generateImageSync(prompt, aspectRatio = '1:1') {
     const payload = {
       "prompt": prompt,
       "size": aspectRatioToSize(aspectRatio),
-      "max_images": 1,
+      "max_images": 4,
       "enable_base64_output": false,
       "enable_sync_mode": true
     };
@@ -37,13 +37,13 @@ async function generateImageSync(prompt, aspectRatio = '1:1') {
 
     const result = await response.json();
 
-    if (!result.data || !result.data.outputs || !result.data.outputs[0]) {
-      throw new Error('No image URL returned from API');
+    if (!result.data || !result.data.outputs || result.data.outputs.length !== 4) {
+      throw new Error(`Expected 4 image URLs, got ${result.data?.outputs?.length || 0}`);
     }
 
-    const imageUrl = result.data.outputs[0];
-    console.log(`✅ Image generated: ${imageUrl}`);
-    return imageUrl;
+    const imageUrls = result.data.outputs;
+    console.log(`✅ All 4 images generated: ${imageUrls.join(', ')}`);
+    return imageUrls;
 
   } catch (error) {
     console.error(`❌ Image generation failed: ${error.message}`);
@@ -66,21 +66,21 @@ module.exports = async function handler(req, res) {
       return res.status(401).json({ message: 'Unauthorized webhook request' });
     }
 
-    const { galleryId, imageIndex, enhancedPrompt, aspectRatio } = req.body;
+    const { galleryId, enhancedPrompt, aspectRatio } = req.body;
 
-    if (!galleryId || !imageIndex || !enhancedPrompt) {
+    if (!galleryId || !enhancedPrompt) {
       return res.status(400).json({
-        message: 'Missing required parameters: galleryId, imageIndex, enhancedPrompt'
+        message: 'Missing required parameters: galleryId, enhancedPrompt'
       });
     }
 
-    console.log(`🎨 Processing webhook for gallery ${galleryId}, image ${imageIndex}...`);
+    console.log(`🎨 Processing webhook for gallery ${galleryId} - generating all 4 images...`);
 
-    // Generate image synchronously
-    const imageUrl = await generateImageSync(enhancedPrompt, aspectRatio);
+    // Generate all 4 images synchronously
+    const imageUrls = await generateImagesSync(enhancedPrompt, aspectRatio);
 
-    console.log(`✅ Webhook completed for image ${imageIndex} in gallery ${galleryId}`);
-    console.log(`🖼️ Image URL: ${imageUrl}`);
+    console.log(`✅ Webhook completed for gallery ${galleryId}`);
+    console.log(`🖼️ All 4 Image URLs: ${imageUrls.join(', ')}`);
 
     // Update gallery metadata in blob storage
     try {
@@ -121,23 +121,20 @@ module.exports = async function handler(req, res) {
         };
       }
 
-      // Update the specific image
-      const imageObj = galleryData.images.find(img => img.index === imageIndex);
-      if (imageObj) {
-        imageObj.status = 'completed';
-        imageObj.webUrl = imageUrl;
-        imageObj.printUrl = imageUrl;
-        imageObj.requestId = imageUrl.split('/').slice(-2, -1)[0]; // Extract ID from URL
-      }
+      // Update all 4 images
+      imageUrls.forEach((imageUrl, index) => {
+        const imageObj = galleryData.images.find(img => img.index === index + 1);
+        if (imageObj) {
+          imageObj.status = 'completed';
+          imageObj.webUrl = imageUrl;
+          imageObj.printUrl = imageUrl;
+          imageObj.requestId = imageUrl.split('/').slice(-2, -1)[0]; // Extract ID from URL
+        }
+      });
 
-      // Update progress
-      const completedCount = galleryData.images.filter(img => img.status === 'completed').length;
-      galleryData.progress.completed = completedCount;
-
-      // Update gallery status
-      if (completedCount === 4) {
-        galleryData.status = 'complete';
-      }
+      // Update progress - all 4 images are now completed
+      galleryData.progress.completed = 4;
+      galleryData.status = 'complete';
 
       // Store updated metadata
       await put(`galleries/${galleryId}/metadata.json`, JSON.stringify(galleryData), {
@@ -146,7 +143,7 @@ module.exports = async function handler(req, res) {
         allowOverwrite: true
       });
 
-      console.log(`📝 Updated gallery metadata: ${completedCount}/4 images completed`);
+      console.log(`📝 Updated gallery metadata: 4/4 images completed`);
     } catch (storageError) {
       console.error('❌ Failed to update gallery metadata:', storageError);
       // Don't fail the webhook if storage fails
@@ -155,9 +152,8 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({
       success: true,
       galleryId,
-      imageIndex,
-      imageUrl: imageUrl,
-      message: `Image ${imageIndex} generated successfully`
+      imageUrls: imageUrls,
+      message: `All 4 images generated successfully`
     });
 
   } catch (error) {
