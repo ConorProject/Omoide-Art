@@ -31,6 +31,8 @@ async function triggerWebhookGeneration(galleryId, userInputs, baseUrl) {
     const webhookSecret = process.env.WEBHOOK_SECRET || 'webhook-secret-key';
 
     console.log(`🔗 Calling webhook: ${webhookUrl}`);
+    console.log(`🔑 Using webhook secret: ${webhookSecret.substring(0, 5)}...`);
+    console.log(`📝 Payload:`, JSON.stringify({ galleryId, aspectRatio: userInputs.aspectRatio }, null, 2));
 
     const webhookPayload = {
       galleryId,
@@ -47,15 +49,20 @@ async function triggerWebhookGeneration(galleryId, userInputs, baseUrl) {
       body: JSON.stringify(webhookPayload)
     });
 
+    const responseText = await response.text();
+    console.log(`📊 Webhook response status: ${response.status}`);
+    console.log(`📄 Webhook response body: ${responseText}`);
+
     if (!response.ok) {
-      console.error(`❌ Webhook failed: ${response.status} ${await response.text()}`);
+      console.error(`❌ Webhook failed: ${response.status} - ${responseText}`);
       // Don't throw - let the gallery be created in "generating" state
     } else {
-      console.log(`✅ Webhook triggered successfully`);
+      console.log(`✅ Webhook triggered successfully: ${responseText}`);
     }
 
   } catch (error) {
     console.error('❌ Failed to trigger webhook generation:', error);
+    console.error('❌ Error stack:', error.stack);
     // Don't throw - let the gallery be created in "generating" state
   }
 }

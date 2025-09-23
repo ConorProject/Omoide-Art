@@ -36,13 +36,14 @@ async function generateImagesSync(prompt, aspectRatio = '1:1') {
     }
 
     const result = await response.json();
+    console.log('🔍 Wavespeed API response:', JSON.stringify(result, null, 2));
 
-    if (!result.data || !result.data.outputs || result.data.outputs.length !== 4) {
-      throw new Error(`Expected 4 image URLs, got ${result.data?.outputs?.length || 0}`);
+    if (!result.data || !result.data.outputs || result.data.outputs.length === 0) {
+      throw new Error(`No image URLs returned. Response: ${JSON.stringify(result)}`);
     }
 
     const imageUrls = result.data.outputs;
-    console.log(`✅ All 4 images generated: ${imageUrls.join(', ')}`);
+    console.log(`✅ Generated ${imageUrls.length} images: ${imageUrls.join(', ')}`);
     return imageUrls;
 
   } catch (error) {
@@ -121,7 +122,7 @@ module.exports = async function handler(req, res) {
         };
       }
 
-      // Update all 4 images
+      // Update images based on what we actually received
       imageUrls.forEach((imageUrl, index) => {
         const imageObj = galleryData.images.find(img => img.index === index + 1);
         if (imageObj) {
@@ -132,9 +133,9 @@ module.exports = async function handler(req, res) {
         }
       });
 
-      // Update progress - all 4 images are now completed
-      galleryData.progress.completed = 4;
-      galleryData.status = 'complete';
+      // Update progress - based on actual images received
+      galleryData.progress.completed = imageUrls.length;
+      galleryData.status = imageUrls.length > 0 ? 'complete' : 'failed';
 
       // Store updated metadata
       await put(`galleries/${galleryId}/metadata.json`, JSON.stringify(galleryData), {
@@ -143,7 +144,7 @@ module.exports = async function handler(req, res) {
         allowOverwrite: true
       });
 
-      console.log(`📝 Updated gallery metadata: 4/4 images completed`);
+      console.log(`📝 Updated gallery metadata: ${imageUrls.length}/4 images completed`);
     } catch (storageError) {
       console.error('❌ Failed to update gallery metadata:', storageError);
       // Don't fail the webhook if storage fails
@@ -153,7 +154,7 @@ module.exports = async function handler(req, res) {
       success: true,
       galleryId,
       imageUrls: imageUrls,
-      message: `All 4 images generated successfully`
+      message: `Generated ${imageUrls.length} image${imageUrls.length === 1 ? '' : 's'} successfully`
     });
 
   } catch (error) {
