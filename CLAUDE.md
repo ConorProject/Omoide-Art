@@ -4,18 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Omoide Art is a web application that transforms personal Japan travel memories into AI-generated shin-hanga style artwork. Users complete a guided 5-step questionnaire to describe their memory, and the system uses advanced AI preprocessing (Gemini API) to enhance prompts before generating high-resolution 2048x2048 artwork via Wavespeed AI. The system now features a Magic Link gallery architecture with print-on-demand capabilities.
+Omoide Art is a web application that transforms personal Japan travel memories into AI-generated shin-hanga style artwork. Users complete a guided 5-step questionnaire to describe their memory, and the system uses advanced AI preprocessing (Gemini API) to enhance prompts before generating high-resolution 4096x4096 artwork via Wavespeed AI. The system now features a Magic Link gallery architecture with print-on-demand capabilities.
 
 ## Current Status
 - ✅ HTML structure (public/index.html) - Complete guided memory form
 - ✅ CSS styling (public/style.css) - Japanese-inspired responsive design with square image containers
 - ✅ JavaScript interactivity (script.js) - Form handling with Magic Link redirect
 - ✅ AI preprocessing pipeline - Gemini API transforms basic inputs into sophisticated artistic prompts
-- ✅ High-resolution image generation - Wavespeed AI producing 2048x2048 shin-hanga artwork
+- ✅ High-resolution image generation - Wavespeed AI producing 4096x4096 shin-hanga artwork
 - ✅ Magic Link gallery system - Permanent URLs for sharing and revisiting galleries
 - ✅ Tiered storage - Print-quality originals + watermarked web versions via Vercel Blob
+- ✅ Webhook pipeline with blob metadata - Real-time gallery updates with progress tracking
 - ✅ 30-day expiration system - Automated cleanup with purchase protection
-- ✅ Print-on-demand integration - Prodigi API foundation for canvas and photo prints
+- ✅ Digital collection system - Gallery aggregation and cumulative viewing with localStorage tracking
 - ✅ Deployment ready - Vercel serverless functions with cron jobs
 
 ## Development Commands
@@ -35,8 +36,6 @@ Create `.env.local` for API keys:
 GEMINI_API_KEY='Your-Gemini-API-Key-Goes-Here'
 WAVESPEED_API_KEY='Your-Wavespeed-API-Key-Goes-Here'
 BLOB_READ_WRITE_TOKEN='Your-Vercel-Blob-Token-Goes-Here'
-PRODIGI_API_KEY='Your-Prodigi-API-Key-Goes-Here'
-PRODIGI_SANDBOX='true'
 CLEANUP_SECRET='your-cleanup-secret-key'
 CRON_SECRET='your-cron-secret-key'
 ```
@@ -49,11 +48,12 @@ This is a Magic Link gallery system with serverless backend:
 - `public/script.js` - Client-side JavaScript for form submission and Magic Link redirect
 - `public/style.css` - Complete styling using CSS custom properties and responsive design
 - `public/gallery/index.html` - Dynamic gallery display page with print ordering
-- `/api/generate.js` - Synchronous gallery creation with blob storage
+- `/api/generate.js` - Gallery creation with webhook-based image generation
+- `/api/webhook-simple.js` - Webhook handler for image generation and metadata updates
 - `/api/gallery.js` - Gallery data retrieval with expiration checking
 - `/api/cleanup-expired.js` - Automated cleanup of expired galleries
 - `/api/cron-cleanup.js` - Daily cron job for maintenance
-- `/api/prodigi-orders.js` - Print-on-demand order management
+- `/api/collection.js` - Multi-gallery aggregation for cumulative collections
 
 ## Key Technical Details
 
@@ -66,10 +66,10 @@ The memory questionnaire follows a storytelling approach:
 ### Magic Link Gallery Flow
 1. User submits memory form
 2. AI enhances prompts via Gemini API
-3. Wavespeed AI generates 4 high-resolution images synchronously
-4. System creates watermarked web versions using Sharp
-5. Both versions uploaded to Vercel Blob storage
-6. Gallery metadata created with 30-day expiration
+3. Webhook triggers parallel image generation via Wavespeed AI
+4. Each completed image updates gallery metadata in real-time
+5. Gallery shows live progress as images complete
+6. Gallery metadata persisted to Vercel Blob storage
 7. User redirected to permanent Magic Link: `/gallery/{uuid}`
 8. Gallery displays memory details + artwork with print ordering
 
@@ -84,17 +84,18 @@ The memory questionnaire follows a storytelling approach:
 - **Backend**: Vercel serverless functions with blob storage
 - **AI Pipeline**:
   - **Text Enhancement**: Gemini 1.5 Flash transforms user inputs into sophisticated prompts
-  - **Image Generation**: Wavespeed AI (Imagen 4.0 Ultra) creates 2048x2048 artwork
+  - **Image Generation**: Wavespeed AI (Imagen 4.0 Ultra) creates 4096x4096 artwork
 - **Art Style**: Modern shin-hanga woodblock print aesthetic
 - **Storage**: Vercel Blob with tiered print/web versions
-- **Print Integration**: Prodigi API for canvas prints, photo prints, etc.
+- **Digital Collections**: localStorage-based gallery tracking and aggregation
 
 ## Recent Major Improvements
 - ✅ **Magic Link Architecture**: Complete redesign from async polling to synchronous galleries
 - ✅ **Vercel Blob Integration**: Persistent storage for print and web versions
 - ✅ **Watermark System**: Automated watermarking for web versions using Sharp
+- ✅ **Webhook Metadata Pipeline**: Real-time gallery updates with blob storage persistence
 - ✅ **30-Day Expiration**: Galleries expire unless purchased, with automated cleanup
-- ✅ **Print-on-Demand Foundation**: Prodigi API integration for physical products
+- ✅ **Digital Collection System**: Multi-gallery aggregation with localStorage tracking and cumulative viewing
 - ✅ **Gallery Display System**: Beautiful responsive gallery pages with memory context
 - ✅ **Automated Maintenance**: Daily cron jobs for expired gallery cleanup
 - ✅ **Dynamic Routing**: Vercel rewrites for `/gallery/{id}` URLs
@@ -104,10 +105,10 @@ The memory questionnaire follows a storytelling approach:
 ### Magic Link Gallery Pipeline
 1. **User Input**: 5-question memory form captures location, focus, details, atmosphere, feelings
 2. **AI Enhancement**: Gemini 1.5 Flash transforms basic inputs using expert art director instructions
-3. **Synchronous Generation**: Wavespeed AI creates 4 variations in 2K resolution
-4. **Image Processing**: Sharp creates watermarked web versions (2048x2048) + preserves print versions
-5. **Blob Storage**: Vercel Blob stores both versions in organized gallery structure
-6. **Metadata Creation**: Gallery metadata with expiration, user inputs, and image references
+3. **Webhook Generation**: Parallel webhook calls trigger 4 image generations in 4K resolution
+4. **Real-time Updates**: Each completed image immediately updates gallery metadata
+5. **Blob Storage**: Vercel Blob stores metadata with progress tracking and image URLs
+6. **Progress Tracking**: Gallery shows live status from 'generating' to 'complete'
 7. **Magic Link**: Permanent shareable URL with 30-day expiration protection
 
 ### Storage Structure
@@ -127,7 +128,7 @@ galleries/
 
 ### Cost Structure
 - **Gemini API**: ~$0.0001-0.0005 per prompt enhancement (negligible)
-- **Wavespeed AI**: ~$0.058 per 2K image generation (4 images)
+- **Wavespeed AI**: ~$0.058 per 4K image generation (4 images)
 - **Vercel Blob**: Storage costs for images and metadata
 - **Total**: Extremely cost-effective for professional-quality results
 
@@ -140,27 +141,27 @@ galleries/
 - Daily cron job (`0 2 * * *`) cleans expired galleries
 - Manual cleanup API available with secret key authentication
 
-### Print-on-Demand Integration
+### Digital Collection System
 
-The system includes Prodigi API integration for physical product fulfillment:
+The system includes a cumulative gallery collection feature:
 
-**Available Products:**
-- 8" x 10" Canvas Print - $24.99
-- 12" x 16" Canvas Print - $39.99
-- 8" x 10" Photo Print - $8.99
-- 12" x 16" Photo Print - $14.99
+**Collection Features:**
+- localStorage-based gallery tracking across sessions
+- Multi-gallery aggregation via `/collection` endpoint
+- Responsive grid display of all user artwork
+- Digital download functionality for high-quality images
 
 **API Endpoints:**
-- `POST /api/prodigi-orders` - Product catalog, quotes, order creation
-- Gallery pages include "Order Prints" functionality
-- Sandbox/production environment support
+- `POST /api/collection` - Aggregates multiple galleries into collections
+- Gallery pages include "View My Collection" navigation
+- Collection page at `/collection` with responsive design
 
 **Integration Status:**
-- ✅ API wrapper and product catalog
-- ✅ Quote generation system
-- ✅ Order creation pipeline
-- ⚠️ Requires Prodigi API credentials for activation
-- ⚠️ Needs full checkout UI and payment processing
+- ✅ localStorage gallery tracking system
+- ✅ Collection API for multi-gallery aggregation
+- ✅ Responsive collection page with grid layout
+- ✅ Digital download placeholder functionality
+- ⚠️ Needs Stripe integration for digital checkout
 
 ## Environment Variables Required
 
@@ -169,20 +170,44 @@ The system includes Prodigi API integration for physical product fulfillment:
 - `WAVESPEED_API_KEY` - Wavespeed AI for image generation
 - `BLOB_READ_WRITE_TOKEN` - Vercel Blob storage access
 
-### Print Integration
-- `PRODIGI_API_KEY` - Prodigi print-on-demand service
-- `PRODIGI_SANDBOX` - Set to 'true' for testing
 
 ### Maintenance
 - `CLEANUP_SECRET` - Secret key for manual cleanup API
 - `CRON_SECRET` - Vercel cron job authentication
 
 ## Future Enhancements
-1. **Full Checkout Flow**: Complete UI for product selection and payment
-2. **Order Management**: Track purchases in gallery metadata
-3. **Enhanced Products**: Additional print formats and sizes
+1. **Digital Checkout Flow**: Stripe integration for digital download purchases
+2. **Download Management**: Track digital purchases in gallery metadata
+3. **Enhanced Digital Products**: Multiple format options (PNG, JPG, PDF)
 4. **Analytics**: Gallery view tracking and usage metrics
 5. **Social Features**: Gallery sharing and discovery
+6. **Collection Management**: Advanced filtering and organization tools
+
+## Production Resource Constraint Solutions (TODO - Deferred)
+
+### Rate Limiting & Queue Management
+- **Implement user-based rate limiting**: Prevent individual users from overwhelming Wavespeed quota
+- **Gallery-based cooldown**: 5-10 minute cooldown between gallery creations per IP/session
+- **Queue system**: Handle concurrent requests by queuing rather than rejecting
+- **Smart retry logic**: Exponential backoff for failed Wavespeed API calls
+
+### Quota Management
+- **Daily quota monitoring**: Track Wavespeed API usage against daily limits
+- **Graceful degradation**: Reduce from 4 images to 2-3 when approaching quota limits
+- **Quota alerts**: Email notifications when reaching 80% of daily quota
+- **Peak hour management**: Adjust max concurrent generations during high traffic
+
+### Download Timeout Handling
+- **Extended Vercel timeouts**: Utilize Vercel Pro's longer function execution limits
+- **Progressive image delivery**: Return gallery immediately with images loading progressively
+- **CDN optimization**: Leverage Wavespeed's CDN for faster image delivery
+- **Fallback mechanisms**: Retry failed downloads with exponential backoff
+
+### Monitoring & Alerting
+- **Health check endpoints**: Monitor Wavespeed API availability
+- **Error rate tracking**: Alert when generation failure rate exceeds threshold
+- **Performance metrics**: Track average generation times and identify slowdowns
+- **User experience monitoring**: Track gallery completion rates and user satisfaction
 
 ## Magic Link Benefits
 - **Permanent URLs**: Galleries never lose their links

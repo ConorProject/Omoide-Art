@@ -65,6 +65,9 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`📝 Status: ${galleryData.status}`);
             showNotification('Gallery ready! Your artwork is being created. Redirecting...', 'success');
 
+            // Add to localStorage collection before redirect
+            addGalleryToLocalStorage(galleryData.galleryId);
+
             // Quick redirect since gallery is created immediately
             setTimeout(() => {
                 window.location.href = `/gallery/${galleryData.galleryId}`;
@@ -789,6 +792,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const timestamp = Date.now();
         const randomStr = Math.random().toString(36).substring(2, 8);
         return `gallery-${timestamp}-${randomStr}`;
+    }
+
+    /**
+     * Add gallery ID to localStorage collection tracking
+     * @param {string} galleryId - The gallery ID to add
+     */
+    function addGalleryToLocalStorage(galleryId) {
+        try {
+            const existing = JSON.parse(localStorage.getItem('omoideGalleries') || '[]');
+            if (!existing.includes(galleryId)) {
+                existing.push(galleryId);
+                localStorage.setItem('omoideGalleries', JSON.stringify(existing));
+                console.log(`📝 Added gallery ${galleryId} to collection. Total: ${existing.length}`);
+            }
+        } catch (error) {
+            console.warn('Error saving gallery to localStorage:', error);
+        }
     }
 
 });

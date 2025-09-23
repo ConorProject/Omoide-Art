@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Omoide Art Collection</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .collection-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .collection-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .collection-title {
+            font-family: 'Noto Serif JP', serif;
+            font-size: clamp(2.2rem, 4vw, 3rem);
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .collection-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-light);
+            margin-bottom: 24px;
+        }
+
+        .collection-stats {
+            background: linear-gradient(135deg, #FFF8F0 0%, #FFF2E6 100%);
+            border: 1px solid #F0C674;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            padding: 16px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .collection-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+
+        .action-button {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .action-button:hover {
+            background: #A63D40;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .action-button.secondary {
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--accent-color);
+            border: 2px solid var(--accent-color);
+        }
+
+        .action-button.secondary:hover {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .galleries-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 60px;
+        }
+
+        .gallery-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: var(--shadow-medium);
+            border: 1px solid var(--border-color);
+        }
+
+        .gallery-memory {
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 2px solid var(--hover-bg);
+        }
+
+        .memory-location {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 12px;
+        }
+
+        .memory-focus {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .memory-detail {
+            color: var(--text-light);
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+
+        .memory-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .memory-tag {
+            background: var(--hover-bg);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .image-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-light);
+            border: 2px solid transparent;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .image-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+        }
+
+        .image-card.selected {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 20px rgba(191, 61, 65, 0.3);
+        }
+
+        .image-container {
+            position: relative;
+            aspect-ratio: 1;
+            overflow: hidden;
+        }
+
+        .collection-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition);
+        }
+
+        .image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .image-card:hover .image-overlay {
+            opacity: 1;
+        }
+
+        .view-fullsize {
+            background: white;
+            color: var(--text-primary);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .view-fullsize:hover {
+            background: var(--hover-bg);
+        }
+
+        .image-checkbox {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 24px;
+            height: 24px;
+            border: 2px solid white;
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            z-index: 10;
+        }
+
+        .image-checkbox input {
+            display: none;
+        }
+
+        .image-checkbox.checked {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        .image-checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .image-info {
+            padding: 16px;
+        }
+
+        .image-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .image-memory {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        .purchase-section {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, var(--accent-color) 0%, #A63D40 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            transform: translateY(100%);
+            transition: var(--transition);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+
+        .purchase-section.visible {
+            transform: translateY(0);
+        }
+
+        .purchase-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 32px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .purchase-count {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .purchase-price {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .purchase-button {
+            background: white;
+            color: var(--accent-color);
+            border: none;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .purchase-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            color: var(--text-light);
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-collection {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-light);
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+        }
+
+        .empty-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .empty-description {
+            font-size: 1.1rem;
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .collection-container {
+                padding: 20px 16px;
+            }
+
+            .gallery-section {
+                padding: 24px;
+            }
+
+            .images-grid {
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+                gap: 16px;
+            }
+
+            .purchase-info {
+                gap: 16px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="collection-container">
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <p>Loading your collection...</p>
+        </div>
+
+        <div id="empty-collection" class="empty-collection" style="display: none;">
+            <div class="empty-icon">🎨</div>
+            <h2 class="empty-title">Your Collection is Empty</h2>
+            <p class="empty-description">
+                Start creating your digital Japan memory collection by generating your first artwork.
+                Each memory transforms into 4 beautiful variations in traditional shin-hanga style.
+            </p>
+            <a href="/" class="action-button">Create Your First Memory</a>
+        </div>
+
+        <div id="collection-content" style="display: none;">
+            <div class="collection-header">
+                <h1 class="collection-title">My Omoide Art Collection</h1>
+                <p class="collection-subtitle">Your digital Japan memories transformed into traditional shin-hanga artwork</p>
+            </div>
+
+            <div id="collection-stats" class="collection-stats">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number" id="stat-memories">0</div>
+                        <div class="stat-label">Memories</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="stat-images">0</div>
+                        <div class="stat-label">Artworks</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="stat-completed">0</div>
+                        <div class="stat-label">Ready</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="stat-days">0</div>
+                        <div class="stat-label">Days Left</div>
+                    </div>
+                </div>
+                <p id="collection-description"></p>
+            </div>
+
+            <div class="collection-actions">
+                <button class="action-button" id="select-all-btn">Select All</button>
+                <button class="action-button secondary" id="clear-selection-btn">Clear Selection</button>
+                <a href="/" class="action-button secondary">Create Another Memory</a>
+            </div>
+
+            <div id="galleries-grid" class="galleries-grid">
+                <!-- Galleries will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <div id="purchase-section" class="purchase-section">
+        <div class="purchase-info">
+            <div class="purchase-count">
+                <span id="selected-count">0</span> images selected
+            </div>
+            <div class="purchase-price">
+                $<span id="total-price">0</span>
+            </div>
+        </div>
+        <button class="purchase-button" onclick="startPurchase()">
+            Download Selected Images
+        </button>
+    </div>
+
+    <script>
+        // Collection state
+        let collectionData = null;
+        let selectedImages = new Set();
+        const PRICE_PER_IMAGE = 4.99;
+
+        // Load collection on page load
+        document.addEventListener('DOMContentLoaded', loadCollection);
+
+        // Load collection from localStorage
+        async function loadCollection() {
+            try {
+                // Get gallery IDs from localStorage
+                const galleryIds = getStoredGalleryIds();
+
+                if (!galleryIds || galleryIds.length === 0) {
+                    showEmptyCollection();
+                    return;
+                }
+
+                // Fetch collection data
+                const response = await fetch('/api/collection', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ galleryIds })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load collection');
+                }
+
+                const data = await response.json();
+
+                if (!data.success || !data.collection) {
+                    throw new Error('Invalid collection data');
+                }
+
+                collectionData = data.collection;
+                displayCollection();
+
+            } catch (error) {
+                console.error('Failed to load collection:', error);
+                showEmptyCollection();
+            }
+        }
+
+        // Get stored gallery IDs from localStorage
+        function getStoredGalleryIds() {
+            try {
+                const stored = localStorage.getItem('omoideGalleries');
+                return stored ? JSON.parse(stored) : [];
+            } catch (error) {
+                console.warn('Error reading gallery IDs from localStorage:', error);
+                return [];
+            }
+        }
+
+        // Add gallery ID to localStorage
+        function addGalleryToStorage(galleryId) {
+            try {
+                const existing = getStoredGalleryIds();
+                if (!existing.includes(galleryId)) {
+                    existing.push(galleryId);
+                    localStorage.setItem('omoideGalleries', JSON.stringify(existing));
+                }
+            } catch (error) {
+                console.warn('Error saving gallery ID to localStorage:', error);
+            }
+        }
+
+        // Display collection
+        function displayCollection() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('collection-content').style.display = 'block';
+
+            updateCollectionStats();
+            renderGalleries();
+        }
+
+        // Update collection statistics
+        function updateCollectionStats() {
+            const totalMemories = collectionData.totalGalleries;
+            const totalImages = collectionData.totalImages;
+            const completedImages = collectionData.completedImages;
+            const daysLeft = Math.ceil((collectionData.earliestExpiry - Date.now()) / (1000 * 60 * 60 * 24));
+
+            document.getElementById('stat-memories').textContent = totalMemories;
+            document.getElementById('stat-images').textContent = totalImages;
+            document.getElementById('stat-completed').textContent = completedImages;
+            document.getElementById('stat-days').textContent = Math.max(0, daysLeft);
+
+            const description = `Your collection contains ${totalMemories} ${totalMemories === 1 ? 'memory' : 'memories'} with ${completedImages} of ${totalImages} artworks ready for download.`;
+            document.getElementById('collection-description').textContent = description;
+        }
+
+        // Render galleries
+        function renderGalleries() {
+            const galleriesGrid = document.getElementById('galleries-grid');
+
+            galleriesGrid.innerHTML = collectionData.galleries.map(gallery => {
+                const completedImages = gallery.images.filter(img => img.status === 'completed');
+
+                return `
+                    <div class="gallery-section">
+                        <div class="gallery-memory">
+                            <div class="memory-location">${gallery.userInputs.location}, Japan</div>
+                            <div class="memory-focus">${gallery.userInputs.focus}</div>
+                            <div class="memory-detail">${gallery.userInputs.detail}</div>
+                            <div class="memory-tags">
+                                <span class="memory-tag">${gallery.userInputs.atmosphere}</span>
+                                ${gallery.userInputs.feelings.map(feeling =>
+                                    `<span class="memory-tag">${feeling}</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                        <div class="images-grid">
+                            ${gallery.images.map(image => {
+                                if (image.status === 'completed' && image.webUrl) {
+                                    const imageId = `${gallery.id}-${image.index}`;
+                                    return `
+                                        <div class="image-card" data-image-id="${imageId}">
+                                            <div class="image-container">
+                                                <img src="${image.webUrl}" alt="Artwork ${image.index}" class="collection-image" loading="lazy">
+                                                <div class="image-overlay">
+                                                    <button class="view-fullsize" onclick="viewFullsize('${image.webUrl}')">
+                                                        View Full Size
+                                                    </button>
+                                                </div>
+                                                <label class="image-checkbox" onclick="toggleImageSelection('${imageId}', event)">
+                                                    <input type="checkbox" data-image-id="${imageId}">
+                                                </label>
+                                            </div>
+                                            <div class="image-info">
+                                                <div class="image-title">Artwork ${image.index}</div>
+                                                <div class="image-memory">${gallery.userInputs.location}</div>
+                                            </div>
+                                        </div>
+                                    `;
+                                }
+                                return '';
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Toggle image selection
+        function toggleImageSelection(imageId, event) {
+            event.stopPropagation();
+
+            const checkbox = document.querySelector(`input[data-image-id="${imageId}"]`);
+            const checkboxLabel = checkbox.parentElement;
+            const imageCard = document.querySelector(`[data-image-id="${imageId}"]`);
+
+            if (selectedImages.has(imageId)) {
+                selectedImages.delete(imageId);
+                checkbox.checked = false;
+                checkboxLabel.classList.remove('checked');
+                imageCard.classList.remove('selected');
+            } else {
+                selectedImages.add(imageId);
+                checkbox.checked = true;
+                checkboxLabel.classList.add('checked');
+                imageCard.classList.add('selected');
+            }
+
+            updatePurchaseSection();
+        }
+
+        // Select all images
+        document.getElementById('select-all-btn').addEventListener('click', () => {
+            collectionData.galleries.forEach(gallery => {
+                gallery.images.forEach(image => {
+                    if (image.status === 'completed') {
+                        const imageId = `${gallery.id}-${image.index}`;
+                        selectedImages.add(imageId);
+
+                        const checkbox = document.querySelector(`input[data-image-id="${imageId}"]`);
+                        const checkboxLabel = checkbox.parentElement;
+                        const imageCard = document.querySelector(`[data-image-id="${imageId}"]`);
+
+                        checkbox.checked = true;
+                        checkboxLabel.classList.add('checked');
+                        imageCard.classList.add('selected');
+                    }
+                });
+            });
+            updatePurchaseSection();
+        });
+
+        // Clear selection
+        document.getElementById('clear-selection-btn').addEventListener('click', () => {
+            selectedImages.clear();
+
+            document.querySelectorAll('.image-checkbox').forEach(checkbox => {
+                checkbox.classList.remove('checked');
+                const input = checkbox.querySelector('input');
+                input.checked = false;
+            });
+
+            document.querySelectorAll('.image-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            updatePurchaseSection();
+        });
+
+        // Update purchase section
+        function updatePurchaseSection() {
+            const selectedCount = selectedImages.size;
+            const totalPrice = (selectedCount * PRICE_PER_IMAGE).toFixed(2);
+
+            document.getElementById('selected-count').textContent = selectedCount;
+            document.getElementById('total-price').textContent = totalPrice;
+
+            const purchaseSection = document.getElementById('purchase-section');
+            if (selectedCount > 0) {
+                purchaseSection.classList.add('visible');
+            } else {
+                purchaseSection.classList.remove('visible');
+            }
+        }
+
+        // Start purchase process
+        function startPurchase() {
+            if (selectedImages.size === 0) {
+                alert('Please select at least one image to download.');
+                return;
+            }
+
+            // TODO: Implement Stripe checkout for digital downloads
+            alert(`Digital download checkout coming soon! You selected ${selectedImages.size} images for $${(selectedImages.size * PRICE_PER_IMAGE).toFixed(2)}.`);
+        }
+
+        // View fullsize image
+        function viewFullsize(imageUrl) {
+            window.open(imageUrl, '_blank');
+        }
+
+        // Show empty collection
+        function showEmptyCollection() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('empty-collection').style.display = 'block';
+        }
+
+        // Export function for use by gallery pages
+        window.addToCollection = addGalleryToStorage;
+    </script>
+</body>
+</html>

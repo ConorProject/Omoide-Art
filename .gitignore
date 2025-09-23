@@ -21,3 +21,16 @@ service-account.json
 trip-art-generator*.json
 **/trip-art-generator*.json
 *.log
+
+# Ignore development and test artifacts
+backup-api/
+**/backup-api/
+test-*.js
+test-*.png
+test-*.json
+*-backup-*.md
+CLAUDE-backup-*.md
+
+# Ignore redundant node_modules in subdirectories
+api/node_modules/
+**/api/node_modules/

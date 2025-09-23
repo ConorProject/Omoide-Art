@@ -17,6 +17,10 @@
     {
       "source": "/gallery/(.*)",
       "destination": "/gallery/index.html"
+    },
+    {
+      "source": "/collection",
+      "destination": "/collection/index.html"
     }
   ],
   "crons": [

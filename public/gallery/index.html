@@ -210,6 +210,57 @@
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
         }
 
+        .cta-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .new-gallery-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-block;
+        }
+
+        .new-gallery-button:hover {
+            background: white;
+            color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .collection-button {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-block;
+        }
+
+        .collection-button:hover {
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--accent-color);
+            border-color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
         .loading {
             display: flex;
             flex-direction: column;
@@ -436,14 +487,22 @@
             </div>
 
             <div class="cta-section">
-                <h2 class="cta-title">Preserve Your Memories Forever</h2>
+                <h2 class="cta-title">Download Your Digital Collection</h2>
                 <p class="cta-description">
-                    Transform these digital artworks into beautiful physical prints.
-                    Choose from premium papers, canvas, or traditional Japanese washi paper.
+                    Get instant access to high-resolution, watermark-free versions of your artwork.
+                    Perfect for digital collections, printing at home, or social media sharing.
                 </p>
-                <button class="cta-button" onclick="startPrintOrder()">
-                    Order High-Quality Prints
-                </button>
+                <div class="cta-buttons">
+                    <button class="cta-button" onclick="startDigitalDownload()">
+                        Download High-Quality Images
+                    </button>
+                    <a href="/collection" class="collection-button">
+                        View My Collection
+                    </a>
+                    <a href="/" class="new-gallery-button">
+                        Create Another Memory
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -891,39 +950,25 @@
             window.open(imageUrl, '_blank');
         }
 
-        // Start print order process
-        async function startPrintOrder() {
+        // Start digital download process
+        async function startDigitalDownload() {
             try {
-                // Get available print products
-                const response = await fetch('/api/prodigi-orders', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ action: 'get-products' })
-                });
+                const completedImages = currentGallery.images.filter(img => img.status === 'completed');
 
-                const data = await response.json();
-
-                if (data.success) {
-                    showPrintOrderModal(data.products);
-                } else {
-                    throw new Error(data.message || 'Failed to load print products');
+                if (completedImages.length === 0) {
+                    alert('No images are ready for download yet. Please wait for generation to complete.');
+                    return;
                 }
 
+                const galleryId = getGalleryId();
+
+                // TODO: Implement Stripe checkout for digital downloads
+                alert(`Digital download coming soon!\n\nYou have ${completedImages.length} high-quality images ready for download.\n\nPrice: $${(completedImages.length * 4.99).toFixed(2)} total\n\nThis will include:\n• Watermark-free high-resolution versions\n• Multiple format options\n• Instant download access`);
+
             } catch (error) {
-                console.error('Print order error:', error);
-                alert('Print ordering is temporarily unavailable. Please try again later.');
+                console.error('Digital download error:', error);
+                alert('Digital downloads are temporarily unavailable. Please try again later.');
             }
-        }
-
-        // Show print order modal (placeholder for now)
-        function showPrintOrderModal(products) {
-            const productList = Object.entries(products)
-                .map(([key, product]) => `• ${product.name} - $${(product.price / 100).toFixed(2)}`)
-                .join('\n');
-
-            alert(`Print products available:\n\n${productList}\n\nFull print ordering interface coming soon! This will include product selection, shipping address, and payment processing.`);
         }
 
         // Retry failed image generation
@@ -980,8 +1025,28 @@
             }
         }
 
+        // Add current gallery to localStorage collection when page loads
+        function addCurrentGalleryToCollection() {
+            const galleryId = getGalleryId();
+            if (galleryId) {
+                try {
+                    const existing = JSON.parse(localStorage.getItem('omoideGalleries') || '[]');
+                    if (!existing.includes(galleryId)) {
+                        existing.push(galleryId);
+                        localStorage.setItem('omoideGalleries', JSON.stringify(existing));
+                        console.log(`📝 Added gallery ${galleryId} to collection. Total: ${existing.length}`);
+                    }
+                } catch (error) {
+                    console.warn('Error saving gallery to localStorage:', error);
+                }
+            }
+        }
+
         // Initialize gallery on page load
-        document.addEventListener('DOMContentLoaded', loadGallery);
+        document.addEventListener('DOMContentLoaded', () => {
+            addCurrentGalleryToCollection();
+            loadGallery();
+        });
     </script>
 </body>
 </html>
