@@ -120,12 +120,9 @@ async function triggerWebhookGeneration(galleryId, userInputs, baseUrl) {
       return { batch: true, success: false, error: error.message };
     });
 
-    // Don't wait for the promise to resolve
-    batchPromise.then(result => {
-      console.log(`🎯 Batch webhook result:`, result);
-    }).catch(error => {
-      console.error(`💥 Batch webhook promise error:`, error);
-    });
+    // Wait for the batch promise to complete
+    const result = await batchPromise;
+    console.log(`🎯 Batch webhook result:`, result);
 
   } catch (error) {
     console.error('❌ Failed to trigger webhook generation:', error);
@@ -191,58 +188,9 @@ module.exports = async function handler(req, res) {
       // Don't fail the entire request if storage fails
     }
 
-    // Trigger async image generation via webhook with enhanced debugging
-    console.log('🎯 Attempting webhook generation with enhanced debugging...');
-    console.log('📍 Environment variables check:');
-    console.log('  - WEBHOOK_SECRET exists:', !!process.env.WEBHOOK_SECRET);
-    console.log('  - WAVESPEED_API_KEY exists:', !!process.env.WAVESPEED_API_KEY);
-
-    const finalPrompt = constructArtisticPrompt(userInputs);
-    const webhookUrl = `${baseUrl}/api/webhook-simple`;
-    const webhookSecret = process.env.WEBHOOK_SECRET || 'webhook-secret-key';
-
-    console.log(`🔗 Webhook URL: ${webhookUrl}`);
-    console.log(`🔑 Webhook secret: ${webhookSecret.substring(0, 5)}...`);
-    console.log(`📝 Prompt preview: ${finalPrompt.substring(0, 100)}...`);
-
-    const webhookPayload = {
-      galleryId,
-      enhancedPrompt: finalPrompt,
-      aspectRatio: userInputs.aspectRatio || '1:1'
-    };
-
-    console.log(`📦 Webhook payload:`, JSON.stringify(webhookPayload, null, 2));
-
-    // Make the webhook call with detailed logging
-    console.log(`🚀 ABOUT TO MAKE WEBHOOK CALL TO: ${webhookUrl}`);
-    console.log(`🔑 Using webhook secret: ${webhookSecret.substring(0, 8)}...`);
-    console.log(`📦 Payload stringified length: ${JSON.stringify(webhookPayload).length}`);
-
-    fetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Webhook-Secret': webhookSecret
-      },
-      body: JSON.stringify(webhookPayload)
-    }).then(async response => {
-      const responseText = await response.text();
-      console.log(`📊 Webhook response status: ${response.status}`);
-      console.log(`📄 Webhook response body: ${responseText}`);
-
-      if (response.ok) {
-        console.log('✅ Webhook call succeeded');
-      } else {
-        console.error(`❌ Webhook call failed: ${response.status} - ${responseText}`);
-      }
-    }).catch(error => {
-      console.error('💥 Webhook fetch error:', error);
-      console.error('💥 Error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
-    });
+    // Trigger async image generation via webhook - REMOVE DUPLICATE IMPLEMENTATION
+    console.log('🎯 Triggering webhook generation...');
+    await triggerWebhookGeneration(galleryId, userInputs, baseUrl);
 
     const magicLink = `${host}/gallery/${galleryId}`;
 
