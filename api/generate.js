@@ -120,9 +120,12 @@ async function triggerWebhookGeneration(galleryId, userInputs, baseUrl) {
       return { batch: true, success: false, error: error.message };
     });
 
-    // Wait for the batch promise to complete
-    const result = await batchPromise;
-    console.log(`🎯 Batch webhook result:`, result);
+    // Don't wait for the batch promise - let it run async
+    batchPromise.then(result => {
+      console.log(`🎯 Batch webhook result:`, result);
+    }).catch(error => {
+      console.error(`💥 Batch webhook promise error:`, error);
+    });
 
   } catch (error) {
     console.error('❌ Failed to trigger webhook generation:', error);
@@ -188,9 +191,11 @@ module.exports = async function handler(req, res) {
       // Don't fail the entire request if storage fails
     }
 
-    // Trigger async image generation via webhook - REMOVE DUPLICATE IMPLEMENTATION
+    // Trigger async image generation via webhook - FIRE AND FORGET
     console.log('🎯 Triggering webhook generation...');
-    await triggerWebhookGeneration(galleryId, userInputs, baseUrl);
+    triggerWebhookGeneration(galleryId, userInputs, baseUrl).catch(error => {
+      console.error('❌ Webhook generation failed:', error);
+    });
 
     const magicLink = `${host}/gallery/${galleryId}`;
 
