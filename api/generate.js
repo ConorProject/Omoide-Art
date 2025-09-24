@@ -25,6 +25,8 @@ function aspectRatioToSize(aspectRatio) {
 async function triggerWebhookGeneration(galleryId, userInputs, baseUrl) {
   try {
     console.log('🚀 Triggering webhook generation for gallery:', galleryId);
+    console.log('🌐 Environment check: WEBHOOK_SECRET exists:', !!process.env.WEBHOOK_SECRET);
+    console.log('🔮 Environment check: WAVESPEED_API_KEY exists:', !!process.env.WAVESPEED_API_KEY);
 
     const finalPrompt = constructArtisticPrompt(userInputs);
     const webhookUrl = `${baseUrl}/api/webhook-simple`;
@@ -32,33 +34,98 @@ async function triggerWebhookGeneration(galleryId, userInputs, baseUrl) {
 
     console.log(`🔗 Calling webhook: ${webhookUrl}`);
     console.log(`🔑 Using webhook secret: ${webhookSecret.substring(0, 5)}...`);
-    console.log(`📝 Payload:`, JSON.stringify({ galleryId, aspectRatio: userInputs.aspectRatio }, null, 2));
+
+    // Try batch generation first (Pro plan supports up to 60s)
+    console.log(`📝 Attempting batch webhook for all 4 images...`);
 
     const webhookPayload = {
       galleryId,
       enhancedPrompt: finalPrompt,
       aspectRatio: userInputs.aspectRatio || '1:1'
+      // No imageIndex = batch mode
     };
 
-    const response = await fetch(webhookUrl, {
+    console.log(`📝 Batch webhook payload:`, JSON.stringify(webhookPayload, null, 2));
+
+    console.log(`🔗 About to fetch webhook URL: ${webhookUrl}`);
+    console.log(`📦 Sending webhook payload:`, JSON.stringify(webhookPayload, null, 2));
+
+    const batchPromise = fetch(webhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Webhook-Secret': webhookSecret
       },
       body: JSON.stringify(webhookPayload)
+    }).then(async response => {
+      const responseText = await response.text();
+      console.log(`📊 Batch webhook response status: ${response.status}`);
+      console.log(`📄 Batch webhook response body: ${responseText}`);
+
+      if (!response.ok) {
+        console.error(`❌ Batch webhook failed: ${response.status} - ${responseText}`);
+        console.log(`🔄 Falling back to individual webhook calls...`);
+
+        // Fallback to individual webhook calls
+        const individualPromises = [];
+        for (let imageIndex = 1; imageIndex <= 4; imageIndex++) {
+          const individualPayload = {
+            galleryId,
+            enhancedPrompt: finalPrompt,
+            aspectRatio: userInputs.aspectRatio || '1:1',
+            imageIndex
+          };
+
+          const individualPromise = fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Webhook-Secret': webhookSecret
+            },
+            body: JSON.stringify(individualPayload)
+          }).then(async fallbackResponse => {
+            const fallbackText = await fallbackResponse.text();
+            console.log(`📊 Individual image ${imageIndex} webhook status: ${fallbackResponse.status}`);
+            if (fallbackResponse.ok) {
+              console.log(`✅ Individual image ${imageIndex} webhook successful`);
+            } else {
+              console.error(`❌ Individual image ${imageIndex} webhook failed: ${fallbackText}`);
+            }
+            return { imageIndex, success: fallbackResponse.ok };
+          }).catch(error => {
+            console.error(`❌ Individual image ${imageIndex} webhook error:`, error);
+            return { imageIndex, success: false, error: error.message };
+          });
+
+          individualPromises.push(individualPromise);
+        }
+
+        Promise.all(individualPromises).then(fallbackResults => {
+          const successful = fallbackResults.filter(r => r.success).length;
+          console.log(`🎯 Fallback summary: ${successful}/4 individual webhooks successful`);
+        });
+
+      } else {
+        console.log(`✅ Batch webhook triggered successfully`);
+      }
+      return { batch: true, success: response.ok };
+    }).catch(error => {
+      console.error(`❌ Failed to trigger batch webhook:`, error);
+      console.error(`❌ Error details:`, {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+        cause: error.cause
+      });
+      return { batch: true, success: false, error: error.message };
     });
 
-    const responseText = await response.text();
-    console.log(`📊 Webhook response status: ${response.status}`);
-    console.log(`📄 Webhook response body: ${responseText}`);
-
-    if (!response.ok) {
-      console.error(`❌ Webhook failed: ${response.status} - ${responseText}`);
-      // Don't throw - let the gallery be created in "generating" state
-    } else {
-      console.log(`✅ Webhook triggered successfully: ${responseText}`);
-    }
+    // Don't wait for the promise to resolve
+    batchPromise.then(result => {
+      console.log(`🎯 Batch webhook result:`, result);
+    }).catch(error => {
+      console.error(`💥 Batch webhook promise error:`, error);
+    });
 
   } catch (error) {
     console.error('❌ Failed to trigger webhook generation:', error);
@@ -125,7 +192,15 @@ module.exports = async function handler(req, res) {
     }
 
     // Trigger async image generation via webhook (don't wait for it)
-    triggerWebhookGeneration(galleryId, userInputs, baseUrl);
+    try {
+      // Call the function but don't await it, and ensure errors are properly logged
+      triggerWebhookGeneration(galleryId, userInputs, baseUrl).catch(error => {
+        console.error('💥 Async triggerWebhookGeneration promise failed:', error);
+      });
+      console.log('🎯 triggerWebhookGeneration called successfully');
+    } catch (error) {
+      console.error('💥 triggerWebhookGeneration synchronous error:', error);
+    }
 
     const magicLink = `${host}/gallery/${galleryId}`;
 

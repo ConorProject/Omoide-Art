@@ -72,44 +72,11 @@ module.exports = async function handler(req, res) {
         { index: 4, status: 'pending', requestId: null }
       ];
 
-      // Special case for the fireworks gallery that was manually generated
-      if (id === 'p8z2zmnl_eyJsb2NhdGlvbiI6IlN1bWlkYWdhd2EgaGFuYWJpIGZpcmV3b3JrcyBmZXN0aXZhbCBpbiBhc2FrdXNhIHRva3lvIiwiYXRtb3NwaGVyZSI6Im5pZ2h0IiwiZm9jdXMiOiJ0aGUgZmlyZXdvcmtzIGluIHRoZSBza3kgYW5kIHJlZmxlY3Rpb25zIG9uIHRoZSByaXZlciIsImRldGFpbCI6InNvbWUgZ2lybHMgd2VhcmluZyBwcmV0dHkgeXVrYXRhcyIsImZlZWxpbmdzIjpbImVuZXJnZXRpYyJdLCJhc3BlY3RSYXRpbyI6IjE6MSIsInNlYXNvbiI6InN1bW1lciJ9') {
-        images = [
-          {
-            index: 1,
-            status: 'completed',
-            requestId: '2943fd74e17d4cac86b9d303de5e3150',
-            webUrl: 'https://d1q70pf5vjeyhc.cloudfront.net/predictions/2943fd74e17d4cac86b9d303de5e3150/1.jpeg',
-            printUrl: 'https://d1q70pf5vjeyhc.cloudfront.net/predictions/2943fd74e17d4cac86b9d303de5e3150/1.jpeg'
-          },
-          {
-            index: 2,
-            status: 'completed',
-            requestId: 'd95725cb8aa047e8981ec6faf0f977ed',
-            webUrl: 'https://d1q70pf5vjeyhc.cloudfront.net/predictions/d95725cb8aa047e8981ec6faf0f977ed/1.jpeg',
-            printUrl: 'https://d1q70pf5vjeyhc.cloudfront.net/predictions/d95725cb8aa047e8981ec6faf0f977ed/1.jpeg'
-          },
-          {
-            index: 3,
-            status: 'completed',
-            requestId: '40ac836401b84a4581c46fe464d31e3f',
-            webUrl: 'https://d1q70pf5vjeyhc.cloudfront.net/predictions/40ac836401b84a4581c46fe464d31e3f/1.jpeg',
-            printUrl: 'https://d1q70pf5vjeyhc.cloudfront.net/predictions/40ac836401b84a4581c46fe464d31e3f/1.jpeg'
-          },
-          {
-            index: 4,
-            status: 'completed',
-            requestId: '111bfcfdbf274a5192913b273de2f55c',
-            webUrl: 'https://d1q70pf5vjeyhc.cloudfront.net/predictions/111bfcfdbf274a5192913b273de2f55c/1.jpeg',
-            printUrl: 'https://d1q70pf5vjeyhc.cloudfront.net/predictions/111bfcfdbf274a5192913b273de2f55c/1.jpeg'
-          }
-        ];
-      }
 
       galleryData = {
         id: id,
-        status: id === 'p8z2zmnl_eyJsb2NhdGlvbiI6IlN1bWlkYWdhd2EgaGFuYWJpIGZpcmV3b3JrcyBmZXN0aXZhbCBpbiBhc2FrdXNhIHRva3lvIiwiYXRtb3NwaGVyZSI6Im5pZ2h0IiwiZm9jdXMiOiJ0aGUgZmlyZXdvcmtzIGluIHRoZSBza3kgYW5kIHJlZmxlY3Rpb25zIG9uIHRoZSByaXZlciIsImRldGFpbCI6InNvbWUgZ2lybHMgd2VhcmluZyBwcmV0dHkgeXVrYXRhcyIsImZlZWxpbmdzIjpbImVuZXJnZXRpYyJdLCJhc3BlY3RSYXRpbyI6IjE6MSIsInNlYXNvbiI6InN1bW1lciJ9' ? 'complete' : 'generating',
-        progress: id === 'p8z2zmnl_eyJsb2NhdGlvbiI6IlN1bWlkYWdhd2EgaGFuYWJpIGZpcmV3b3JrcyBmZXN0aXZhbCBpbiBhc2FrdXNhIHRva3lvIiwiYXRtb3NwaGVyZSI6Im5pZ2h0IiwiZm9jdXMiOiJ0aGUgZmlyZXdvcmtzIGluIHRoZSBza3kgYW5kIHJlZmxlY3Rpb25zIG9uIHRoZSByaXZlciIsImRldGFpbCI6InNvbWUgZ2lybHMgd2VhcmluZyBwcmV0dHkgeXVrYXRhcyIsImZlZWxpbmdzIjpbImVuZXJnZXRpYyJdLCJhc3BlY3RSYXRpbyI6IjE6MSIsInNlYXNvbiI6InN1bW1lciJ9' ? { completed: 4, total: 4, failed: 0 } : { completed: 0, total: 4, failed: 0 },
+        status: 'generating',
+        progress: { completed: 0, total: 4, failed: 0 },
         createdAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         userInputs: userInputs,
